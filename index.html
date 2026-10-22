@@ -529,7 +529,7 @@ function vSyncBox() {
   <div class="mut" style="margin-top:4px">Redirect URI da registrare: <code>${esc(redirect)}</code></div><div class="row" style="margin-top:10px">`;
   h += `<button class="b pri" data-act="login">${tok ? "Riaccedi" : "Accedi con Microsoft"}</button>`;
   if (tok) h += `<button class="b" data-act="syncnow">Sincronizza ora</button><button class="b bad" data-act="logout">Esci</button>`;
-  h += `</div><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedi guida): da file locale funziona solo offline." : ""}</p>`;
+  h += `</div><div class="row" style="margin-top:10px"><button class="b bad" data-act="wipe">Esci e cancella i dati da questo dispositivo</button></div><p class="mut" style="margin-top:6px">Da usare sempre su un computer che non è tuo. I dati restano su OneDrive e li ritrovi riaccedendo.</p><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedi guida): da file locale funziona solo offline." : ""}</p>`;
   return h;
 }
 
@@ -619,6 +619,13 @@ document.addEventListener("click", e => {
   else if (a === "slot") { const s = t.dataset.s, sel = ui._disp.sel; sel.has(s) ? sel.delete(s) : sel.add(s); t.classList.toggle("on"); }
   else if (a === "dispsave") { const u = ui._disp; put("disp", { id: u.id, slot: [...u.sel].sort(), nota: $("#ed_nota").value, dv: $("#ed_dv").checked }); $("#dlg").close(); commit(); }
   else if (a === "login") { cfg.clientId = ($("#cid").value || "").trim(); localStorage.setItem(CFGKEY, JSON.stringify(cfg)); login(); }
+  else if (a === "wipe") {
+    const sync = !!getTok();
+    if (!confirm(sync ? "Cancello dal browser tutti i dati, l'accesso e le impostazioni? Restano al sicuro su OneDrive e li ritrovi riaccedendo." : "Non sei collegato a OneDrive: i dati di questo dispositivo andrebbero persi. Scarica prima un backup. Cancellare comunque?")) return;
+    clearTimeout(syncTimer);
+    [KEY, TOKKEY, CFGKEY].forEach(k => localStorage.removeItem(k)); sessionStorage.clear();
+    state = emptyState(); cfg = {}; location.replace(location.href.split(/[?#]/)[0]);
+  }
   else if (a === "logout") { localStorage.removeItem(TOKKEY); ui.sync = { st: "off", msg: "disconnesso" }; render(); }
   else if (a === "syncnow") sync(true);
 });
