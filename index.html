@@ -111,6 +111,16 @@ code{background:var(--soft);padding:2px 5px;border-radius:5px;font-size:13px;ove
 
 .chip b{display:block;font-size:1.05em}.chip small{display:block;font-size:.72em;font-weight:500;opacity:.85;margin-top:1px;white-space:nowrap}
 .note .link{background:none;border:0;color:inherit;font:700 14px system-ui;text-decoration:underline;cursor:pointer;padding:2px}.b:disabled{opacity:.4;cursor:default}
+
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.grp{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--t0);margin:10px 0 0}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;width:100%;min-height:46px;padding:8px 12px;border:1.5px solid var(--line);border-left-width:5px;border-radius:12px;background:var(--surface);color:inherit;font:inherit;cursor:pointer}
+.opt b{display:block;font-weight:700}.opt small{display:block;font-size:12.5px;opacity:.8;line-height:1.3}
+.opt .mk{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line)}
+.opt.g1{border-left-color:var(--t1)}.opt.g2{border-left-color:var(--t2)}.opt.g3{border-left-color:var(--t3)}.opt.g4{border-left-color:var(--t4)}.opt.none{border-left-color:var(--t0)}
+.opt.sel{background:var(--board);color:var(--chalk);border-color:var(--board)}.opt.sel .mk{background:var(--hl);border-color:var(--hl)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px}.mc{min-height:40px;padding:6px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;font:inherit;font-weight:600;cursor:pointer}
+.mc.sel{background:var(--board);color:var(--chalk);border-color:var(--board)}
 </style>
 </head>
 <body>
@@ -216,8 +226,8 @@ const Engine = (() => {
     const first = Math.min(...hrs), last = Math.max(...hrs);
     return ora < first ? "anticipo" : ora > last ? "coda" : "buca";
   }
-  /* ordine di priorità: recupero senza anticipo, a disposizione/IRC, recupero in anticipo (da concordare), sostegno, eccedenti */
-  const rankOf = (tier, anticipo) => tier === 3 ? (anticipo ? 2 : 0) : tier === 1 ? 1 : tier === 2 ? 3 : 4;
+  /* ordine: già in classe (sostegno/compresenza), recupero senza anticipo, a disposizione/IRC, recupero in anticipo (da concordare), eccedenti */
+  const rankOf = (tier, anticipo) => tier === 2 ? 0 : tier === 3 ? (anticipo ? 3 : 1) : tier === 1 ? 2 : 4;
 
   /* elenco ordinato dei candidati per una singola ora scoperta */
   function candidates(state, need, ctx) {
@@ -247,12 +257,15 @@ const Engine = (() => {
         tier = 1; motivo = cell === "DIS" ? "a disposizione" : "alternativa alla religione";
         if (nDay >= maxDay) continue;
       }
-      // 2) sostegno già nella classe
-      else if (d.ruolo === "sostegno" || (d.ruoloOra && d.ruoloOra[slot] === "sostegno")) {
+      // 2) già presente in classe in quell'ora: sostegno o compresenza
+      else {
         const cl = classesOf(cell);
-        if (cl && need.classi.some(c => cl.includes(c)) && need.tipo !== "alternativa") {
-          if (nDay >= maxDaySost) continue;
-          tier = 2; motivo = "sostegno già in classe " + cl.join("+");
+        if (cl && d.ruolo !== "strumento" && need.classi.some(c => cl.includes(c)) && need.tipo !== "alternativa") {
+          const isSost = d.ruolo === "sostegno" || (d.ruoloOra && d.ruoloOra[slot] === "sostegno");
+          if (!(need.tipo === "sostegno" && !isSost)) {
+            if (nDay >= (isSost ? maxDaySost : maxDay)) continue;
+            tier = 2; motivo = (isSost ? "sostegno già in classe " : "in compresenza in classe ") + cl.join("+");
+          }
         }
       }
       // 3) recupero / 4) ore eccedenti: solo se libero in quell'ora
@@ -294,6 +307,21 @@ const Engine = (() => {
     return out;
   }
 
+  /* scelta manuale: docenti che quel giorno hanno lezione ma in quell'ora non sono impegnati in altre classi */
+  function manualCandidates(state, need, ctx, excludeNames) {
+    const dc = dayCode(need.date), slot = dc + need.ora, out = [];
+    for (const [name, d] of Object.entries(state.orario.docenti)) {
+      if (!isRealTeacher(d) || name === need.docenteAssente || excludeNames.has(name)) continue;
+      if (isAbsent(ctx.absMap, name, need.ora)) continue;
+      if (ctx.subs.some(s => !s.del && s.sostituto === name && s.data === need.date && s.ora === need.ora)) continue;
+      if (!presentOn(d, dc)) continue;
+      const cell = d.orario[slot];
+      if (cell && cell !== "DIS" && cell !== "A") continue; // impegnato in una classe (o in biblioteca)
+      out.push({ docente: name, motivo: cell === "DIS" ? "a disposizione (oltre il limite giornaliero)" : cell === "A" ? "alternativa (oltre il limite giornaliero)" : "libero in quest'ora", nMonth: countFor(ctx.subs, name, need.date, "month") });
+    }
+    return out.sort((a, b) => a.nMonth - b.nMonth || a.docente.localeCompare(b.docente));
+  }
+
   /* proposta automatica per un'assenza */
   function propose(state, assenza) {
     const needs = coverNeeds(state, assenza);
@@ -317,7 +345,7 @@ const Engine = (() => {
     return rows;
   }
 
-  return { DAYS, TIER_LABEL, dayCode, addDays, datesBetween, classesOf, coverNeeds, candidates, propose, posizione, absentSlots, countFor, activeSub, activeAbs, monthKey };
+  return { DAYS, TIER_LABEL, dayCode, addDays, datesBetween, classesOf, coverNeeds, candidates, propose, posizione, manualCandidates, absentSlots, countFor, activeSub, activeAbs, monthKey };
 })();
 if (typeof module !== "undefined") module.exports = Engine;
 </script>
@@ -369,16 +397,22 @@ function usedRecuperi(name) { return subs().filter(s => s.sostituto === name && 
 function toast(m) { let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1d2433;color:#fff;padding:9px 16px;border-radius:99px;z-index:20;font-size:14px;max-width:90vw"; document.body.appendChild(t); } t.textContent = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", 3200); }
 function needFor(s) { return { date: s.data, ora: s.ora, classi: s.classi || [], materia: s.materia, tipo: s.tipo, docenteAssente: s.assente }; }
 
-/* opzioni per il menu "sostituto": proposti (per fascia) + tutti gli altri docenti */
-function optionsFor(need, currentSubs, selected) {
+/* elenco visibile dei sostituti, a gruppi nell'ordine di priorità; l'ultimo gruppo è la scelta manuale */
+const GRUPPI = [["in classe", "Già in classe (sostegno e compresenza)", c => c.tier === 2], ["rec", "Devono recuperare un'ora", c => c.tier === 3 && !c.anticipo], ["disp", "A disposizione / alternativa", c => c.tier === 1], ["ant", "Recupero in anticipo · da concordare con il docente", c => c.tier === 3 && c.anticipo], ["ecc", "Ore eccedenti", c => c.tier === 4]];
+function optList(need, currentSubs, selected, act, idx) {
   const ctx = { subs: currentSubs, absMap: E.absentSlots(state, need.date, null) };
   const c = need.tipo === "altro" ? [] : E.candidates(state, need, ctx);
-  const names = new Set(c.map(x => x.docente));
-  let h = `<option value="">— nessuno —</option>`;
-  if (c.length) h += `<optgroup label="Proposti (in ordine di priorità)">` + c.map(x => `<option value="${esc(x.docente)}|${x.tier}|${x.anticipo ? 1 : 0}" ${selected === x.docente ? "selected" : ""}>${esc(nice(x.docente))} — ${esc(x.motivo)}</option>`).join("") + `</optgroup>`;
-  const others = teachers().filter(t => !names.has(t.k) && t.k !== need.docenteAssente);
-  h += `<optgroup label="Altri docenti (scelta manuale)">` + others.map(t => `<option value="${esc(t.k)}|0" ${selected === t.k && !names.has(t.k) ? "selected" : ""}>${esc(nice(t.k))} (${esc(t.materie.join("/").toLowerCase())})</option>`).join("") + `</optgroup>`;
-  return h;
+  const man = E.manualCandidates(state, need, ctx, new Set(c.map(x => x.docente)));
+  const attr = v => `data-act="${act}" ${idx !== undefined ? `data-i="${idx}"` : ""} data-v="${esc(v)}"`;
+  const shown = new Set(); let h = `<div class="opts" role="radiogroup">`;
+  GRUPPI.forEach(([k, label, f], gi) => {
+    const L = c.filter(f); if (!L.length) return;
+    h += `<div class="grp">${esc(label)}</div>` + L.map(x => { shown.add(x.docente); return `<button type="button" class="opt g${k === "in classe" ? 2 : k === "rec" || k === "ant" ? 3 : k === "disp" ? 1 : 4} ${selected === x.docente ? "sel" : ""}" ${attr(x.docente + "|" + x.tier + "|" + (x.anticipo ? 1 : 0))}><span class="mk"></span><span><b>${esc(nice(x.docente))}</b><small>${esc(x.motivo)}</small></span></button>`; }).join("");
+  });
+  if (selected && !c.some(x => x.docente === selected) && !man.some(x => x.docente === selected))
+    h += `<div class="grp">Scelta attuale</div><button type="button" class="opt sel" ${attr(selected + "|0|0")}><span class="mk"></span><span><b>${esc(nice(selected))}</b></span></button>`;
+  if (man.length) h += `<div class="grp">Scelta manuale · hanno lezione quel giorno e in quest'ora sono liberi</div><div class="mchips">` + man.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0")}>${esc(nice(x.docente))}</button>`).join("") + `</div>`;
+  return h + `<button type="button" class="opt none ${!selected ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>lascia l'ora scoperta</small></span></button></div>`;
 }
 
 /* ============ rendering ============ */
@@ -521,14 +555,14 @@ function vDraft() {
   const dd = ui.draft, rows = dd.rows;
   if (!rows.length) return `<div class="card"><div class="note">Il docente non ha ore di lezione in quel periodo: nessuna sostituzione necessaria.</div><button class="b pri" data-act="savedraft">Salva comunque l'assenza</button> <button class="b" data-act="canceldraft">Annulla</button></div>`;
   const unc = rows.filter(r => r.auto && !r.sostituto).length;
-  let h = `<div class="card"><h2>Proposta di sostituzione</h2><p class="mut">${esc(nice(dd.assenza.docente))} · ${rows.length} ore. Puoi cambiare ogni sostituto prima di salvare.</p>${unc ? `<div class="note">${unc} ${unc === 1 ? "ora" : "ore"} senza candidati nelle quattro fasce: scegli un docente a mano o salva come scoperta.</div>` : '<div class="ok-note">Tutte le ore hanno un sostituto proposto.</div>'}`;
+  let h = `<div class="card"><h2>Proposta di sostituzione</h2><p class="mut">${esc(nice(dd.assenza.docente))} · ${rows.length} ${rows.length === 1 ? "ora" : "ore"}. Tocca il sostituto che preferisci per ogni ora, poi salva.</p>${unc ? `<div class="note">${unc} ${unc === 1 ? "ora" : "ore"} senza candidati nelle quattro fasce: scegli un docente a mano o salva come scoperta.</div>` : '<div class="ok-note">Tutte le ore hanno un sostituto proposto.</div>'}`;
   if (dd.permessi && dd.permessi.length) h += dd.permessi.map(p => `<div class="note ${p.eccesso || !p.rec ? "bad" : ""}"><b>${esc(fmtDate(p.data))}</b>: permesso breve, massimo ${p.max} ${p.max === 1 ? "ora" : "ore"} su ${p.tot} (alternativa esclusa). ${p.rec ? `<b>${p.rec} ${p.rec === 1 ? "ora" : "ore"} da recuperare</b> entro il ${esc(fmtDateLong(addMonths(p.data, 2)))}.` : "Nessuna ora recuperabile."}${p.eccesso ? ` Hai scelto ${p.count} ore: ${p.eccesso === 1 ? "1 ora oltre la metà non rientra" : p.eccesso + " ore oltre la metà non rientrano"} nel permesso breve.` : ""}</div>`).join("");
   let last = "";
   rows.forEach((r, i) => {
     if (r.data !== last) { h += `<div class="mut" style="margin-top:8px"><b>${esc(fmtDateLong(r.data))}</b></div>`; last = r.data; }
     const others = subs().filter(s => s.assenzaId !== dd.assenza.id).concat(rows.filter((x, j) => j !== i && x.sostituto).map(x => ({ sostituto: x.sostituto, data: x.data, ora: x.ora, tier: x.tier })));
     h += `<div class="sub"><div class="h">${r.ora}ª<small>${esc(oraLabel(r.ora))}</small></div><div class="m"><div>${r.classe !== "—" ? "Classe <b>" + esc(r.classe) + "</b> · " : ""}${esc(nice(r.materia))}</div>
-    <select data-act="draftsel" data-i="${i}" style="width:100%;margin-top:4px">${optionsFor({ date: r.data, ora: r.ora, classi: r.classi, materia: r.materia, tipo: r.tipo, docenteAssente: dd.assenza.docente }, others, r.sostituto)}</select></div></div>`;
+    ${optList({ date: r.data, ora: r.ora, classi: r.classi, materia: r.materia, tipo: r.tipo, docenteAssente: dd.assenza.docente }, others, r.sostituto, "draftpick", i)}</div></div>`;
   });
   h += `<div class="row" style="margin-top:12px"><button class="b pri" data-act="savedraft">Conferma e salva</button><button class="b" data-act="canceldraft">Annulla</button></div></div>`;
   return h;
@@ -629,7 +663,7 @@ function editSub(id) {
   const s = state.sostituzioni.find(x => x.id === id); if (!s) return;
   const others = subs().filter(x => x.id !== id);
   dlg(`<h3 style="margin-top:0">${esc(s.ora)}ª ora · ${esc(s.classe)} · ${esc(nice(s.materia))}</h3><p class="mut">${esc(fmtDateLong(s.data))} — assente: ${esc(nice(s.assente))}</p>
-  <select id="es_sel" style="width:100%">${optionsFor(needFor(s), others, s.sostituto)}</select>
+  <input type="hidden" id="es_val" value="${s.sostituto ? esc(s.sostituto + "|" + (s.tier || 0) + "|" + (s.anticipo ? 1 : 0)) : ""}">${optList(needFor(s), others, s.sostituto, "espick")}
   <div class="row" style="margin-top:14px"><button class="b pri" data-act="essave" data-id="${id}">Salva</button><button class="b" data-act="dlgclose">Annulla</button></div>`);
 }
 function editDisp(id) {
@@ -701,7 +735,7 @@ document.addEventListener("click", e => {
   else if (a === "savedraft") saveDraft();
   else if (a === "delabs") delAbs(id);
   else if (a === "editsub") editSub(id);
-  else if (a === "essave") { const s = state.sostituzioni.find(x => x.id === id); const v = $("#es_sel").value; if (!v) { s.sostituto = null; s.tier = null; s.anticipo = false; } else { const [n, tr, an] = v.split("|"); s.sostituto = n; s.tier = +tr; s.anticipo = an === "1"; } touch(s); $("#dlg").close(); commit(); }
+  else if (a === "essave") { const s = state.sostituzioni.find(x => x.id === id); const v = $("#es_val").value; if (!v) { s.sostituto = null; s.tier = null; s.anticipo = false; } else { const [n, tr, an] = v.split("|"); s.sostituto = n; s.tier = +tr; s.anticipo = an === "1"; } touch(s); $("#dlg").close(); commit(); }
   else if (a === "dlgclose") $("#dlg").close();
     else if (a === "csv") exportCSV();
   else if (a === "addev") { const ev = { titolo: $("#e_tit").value.trim(), data: $("#e_data").value, ora: $("#e_ora").value, ripeti: $("#e_rip").value, nota: $("#e_nota").value, durata: 30 }; if (!ev.titolo || !ev.data) return toast("Titolo e data sono obbligatori"); put("eventi", ev); ui.evForm = null; commit(); toast("Promemoria aggiunto"); }
@@ -726,6 +760,8 @@ document.addEventListener("click", e => {
   else if (a === "recman") { const p = state.permessi.find(x => x.id === t.dataset.id), d = +t.dataset.d; if (!p) return; const it = permessiStato().find(i => i.p.id === p.id); const ex = state.recuperi.find(r => r.id === p.docente && !r.del);
     if (d > 0 && it && it.res > 0) { p.fatteMan = (p.fatteMan || 0) + 1; touch(p); if (ex) { ex.ore = Math.max(0, ex.ore - 1); touch(ex); } commit(); }
     else if (d < 0 && p.fatteMan > 0) { p.fatteMan--; touch(p); put("recuperi", { id: p.docente, ore: (ex ? ex.ore : 0) + 1 }); commit(); } }
+  else if (a === "draftpick") { const r = ui.draft.rows[+t.dataset.i], v = t.dataset.v, y = scrollY; if (!v) { r.sostituto = null; r.tier = null; r.anticipo = false; } else { const [n, tr, an] = v.split("|"); r.sostituto = n; r.tier = +tr; r.anticipo = an === "1"; } render(); scrollTo(0, y); }
+  else if (a === "espick") { $("#es_val").value = t.dataset.v; $$("#dlg .opt, #dlg .mc").forEach(x => x.classList.remove("sel")); t.classList.add("sel"); }
   else if (a === "syncnow") sync(true);
 });
 document.addEventListener("change", e => {
