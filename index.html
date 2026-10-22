@@ -121,6 +121,7 @@ code{background:var(--soft);padding:2px 5px;border-radius:5px;font-size:13px;ove
 .opt.sel{background:var(--board);color:var(--chalk);border-color:var(--board)}.opt.sel .mk{background:var(--hl);border-color:var(--hl)}
 .mchips{display:flex;flex-wrap:wrap;gap:6px}.mc{min-height:40px;padding:6px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;font:inherit;font-weight:600;cursor:pointer}
 .mc.sel{background:var(--board);color:var(--chalk);border-color:var(--board)}
+.ev{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--line)}.ev:first-of-type{border-top:0}.evt{flex:none;min-width:78px;font-weight:700;color:var(--pen);font-size:14px}.ev small{display:block;font-size:12.5px;opacity:.8;white-space:pre-line}
 </style>
 </head>
 <body>
@@ -420,6 +421,7 @@ function render() {
   $("#app").innerHTML = ui.tab === "oggi" ? vOggi() : ui.tab === "assenze" ? vAssenze() : ui.tab === "registro" ? vRegistro() : ui.tab === "promemoria" ? vPromemoria() : vImpostazioni();
   $$("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === ui.tab));
   renderSyncBadge();
+  if (ui.tab === "oggi") calLoad(ui.date);
 }
 function renderSyncBadge() {
   const b = $("#syncbadge"); if (!b) return; const s = ui.sync;
@@ -441,7 +443,7 @@ function vOggi() {
   <div class="hero-stats"><div class="stat"><b>${cov}</b>${cov === 1 ? "ora coperta" : "ore coperte"}</div><div class="stat ${unc ? "bad" : ""}"><b>${unc}</b>${unc === 1 ? "ora scoperta" : "ore scoperte"}</div></div>
   ${assenti.length ? `<p class="absent-line">Assenti: <b>${assenti.map(a => esc(nice(a))).join(", ")}</b></p>` : ""}
   <button class="b hl" data-act="newabs" data-date="${d}">Nuova assenza</button></section>`;
-  h += recAlert();
+  h += recAlert() + calBox(d);
   if (!wk) h += `<div class="note">Nel fine settimana non ci sono lezioni.</div>`;
   else if (!day.length) h += `<div class="card empty"><b>Nessuna assenza</b>Per questa data non c'è niente da coprire. Tocca «Nuova assenza» per registrarne una.</div>`;
   if (unc) h += `<div class="note bad"><b>${unc} ${unc === 1 ? "ora" : "ore"} senza sostituto.</b> Tocca «Cambia» sulle righe rosse per sceglierlo a mano.</div>`;
@@ -460,6 +462,40 @@ function vOggi() {
   const evs = eventiDelGiorno(d);
   if (evs.length) h += `<div class="card"><h3>Promemoria</h3>${evs.map(e => `<div class="sub"><div class="h">${esc(e.ora || "")}</div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div></div>`).join("")}</div>`;
   return h;
+}
+
+/* ---- CALENDARIO DELLA SCUOLA (sola lettura, tramite uno script Google dell'utente) ---- */
+const CALKEY = "sost_cal_v1";
+let calCache = (() => { try { return JSON.parse(localStorage.getItem(CALKEY)) || {}; } catch (e) { return {}; } })();
+const calCfg = () => { const c = state.settings.cal; return c && c.url ? c : null; };
+const calFail = {};
+async function calLoad(date, force) {
+  const c = calCfg(); if (!c || !navigator.onLine && !force) return;
+  const hit = calCache[date];
+  if (!force && ((hit && Date.now() - hit.at < 10 * 60e3) || (calFail[date] && Date.now() - calFail[date] < 60e3))) return;
+  const to = E.addDays(date, 6);
+  try {
+    const r = await fetch(`${c.url}${c.url.includes("?") ? "&" : "?"}k=${encodeURIComponent(c.k || "")}&from=${date}&to=${to}`);
+    const j = await r.json(); if (j.error) throw new Error(j.error);
+    const ev = j.events || [];
+    for (const d of E.datesBetween(date, to)) calCache[d] = { at: Date.now(), ev: ev.filter(x => x.sd <= d && d <= (x.ed || x.sd)) };
+    const lim = E.addDays(todayStr(), -60); Object.keys(calCache).forEach(k => { if (k < lim) delete calCache[k]; });
+    try { localStorage.setItem(CALKEY, JSON.stringify(calCache)); } catch (e) { }
+    delete calFail[date]; ui.calErr = "";
+  } catch (e) { calFail[date] = Date.now(); ui.calErr = e.message || "errore"; }
+  if (ui.tab === "oggi" || ui.tab === "impostazioni") render();
+}
+function calBox(date) {
+  if (!calCfg()) return "";
+  const hit = calCache[date];
+  let h = `<div class="card"><h3>Calendario della scuola</h3>`;
+  if (!hit) h += `<p class="mut">${calFail[date] ? "Non riesco a leggere il calendario (" + esc(ui.calErr || "errore") + ")." : "Carico gli eventi…"}</p>`;
+  else {
+    const ev = hit.ev.slice().sort((a, b) => (a.all ? 0 : 1) - (b.all ? 0 : 1) || (a.st || "").localeCompare(b.st || ""));
+    h += ev.length ? ev.map(x => `<div class="ev"><span class="evt">${x.all ? "Tutto il giorno" : esc(x.st || "") + (x.et ? "–" + esc(x.et) : "")}</span><div><b>${esc(x.t || "(senza titolo)")}</b>${x.l ? `<small>${esc(x.l)}</small>` : ""}${x.d ? `<small>${esc(x.d)}</small>` : ""}</div></div>`).join("") : '<p class="mut">Nessun evento in calendario.</p>';
+    if (calFail[date]) h += `<p class="mut">Calendario non raggiungibile: mostro i dati salvati alle ${new Date(hit.at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}.</p>`;
+  }
+  return h + "</div>";
 }
 
 /* ---- PERMESSI BREVI: ore da recuperare entro 2 mesi ---- */
@@ -632,6 +668,11 @@ function vImpostazioni() {
   <p class="mut">Importa il file <b>dati_orario.json</b> (una volta sola: poi si sincronizza con OneDrive). I nomi dei docenti restano nel tuo dispositivo e nel tuo OneDrive, non nel codice dell'app.</p>
   <div class="row"><label class="b pri" style="margin:0">Importa dati orario<input type="file" accept=".json" data-act="importdati" hidden></label><button class="b" data-act="backup">Scarica backup</button><label class="b" style="margin:0">Ripristina backup<input type="file" accept=".json" data-act="importbackup" hidden></label></div></div>`;
   h += `<div class="card"><h2>OneDrive</h2>${vSyncBox()}</div>`;
+  const cc = S.cal || {};
+  h += `<details class="card"><summary>Calendario della scuola (sola lettura)</summary><p class="mut">Mostra gli eventi del giorno nella schermata Oggi. Serve l'indirizzo dello script Google (vedi la guida) e la parola segreta che hai scelto.</p>
+  <label class="f">Indirizzo dello script</label><input data-act="calurl" value="${esc(cc.url || "")}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" autocomplete="off">
+  <label class="f">Parola segreta</label><input data-act="calk" value="${esc(cc.k || "")}" autocapitalize="off" autocomplete="off">
+  <div class="row" style="margin-top:10px"><button class="b" data-act="caltest">Prova ora</button></div></details>`;
   h += `<details class="card"><summary>Orari delle ore e limiti</summary><div class="grid" style="grid-template-columns:50px 1fr 1fr;margin-top:8px;text-align:left">${S.ore.map((x, i) => `<div style="padding-top:8px">${i + 1}ª</div><input type="time" value="${x[0]}" data-act="oratime" data-i="${i}" data-k="0"><input type="time" value="${x[1]}" data-act="oratime" data-i="${i}" data-k="1">`).join("")}</div>
   <div class="row" style="margin-top:10px"><label>Max sostituzioni per docente al giorno <input type="number" min="1" max="7" value="${S.maxPerGiorno}" data-act="maxday" style="width:64px"></label></div>
   <div class="row" style="margin-top:6px"><label>Max per un docente di sostegno al giorno <input type="number" min="0" max="7" value="${S.maxSostegnoGiorno}" data-act="maxsost" style="width:64px"></label></div></details>`;
@@ -762,6 +803,7 @@ document.addEventListener("click", e => {
     else if (d < 0 && p.fatteMan > 0) { p.fatteMan--; touch(p); put("recuperi", { id: p.docente, ore: (ex ? ex.ore : 0) + 1 }); commit(); } }
   else if (a === "draftpick") { const r = ui.draft.rows[+t.dataset.i], v = t.dataset.v, y = scrollY; if (!v) { r.sostituto = null; r.tier = null; r.anticipo = false; } else { const [n, tr, an] = v.split("|"); r.sostituto = n; r.tier = +tr; r.anticipo = an === "1"; } render(); scrollTo(0, y); }
   else if (a === "espick") { $("#es_val").value = t.dataset.v; $$("#dlg .opt, #dlg .mc").forEach(x => x.classList.remove("sel")); t.classList.add("sel"); }
+  else if (a === "caltest") { if (!calCfg()) return toast("Scrivi prima l'indirizzo dello script"); toast("Provo a leggere il calendario…"); calLoad(ui.date, true).then(() => toast(ui.calErr ? "Non funziona: " + ui.calErr : "Calendario letto: ora lo vedi nella schermata Oggi")); }
   else if (a === "syncnow") sync(true);
 });
 document.addEventListener("change", e => {
@@ -775,6 +817,7 @@ document.addEventListener("change", e => {
   else if (a === "importdati") importFile(t.files[0], "dati");
   else if (a === "importbackup") importFile(t.files[0], "backup");
   else if (a === "oratime") { state.settings.ore[+t.dataset.i][+t.dataset.k] = t.value; touch(state.settings); commit(); }
+  else if (a === "calurl" || a === "calk") { const c = Object.assign({}, state.settings.cal); if (a === "calurl") c.url = t.value.trim(); else c.k = t.value.trim(); state.settings.cal = c; touch(state.settings); Object.keys(calCache).forEach(k => delete calCache[k]); saveLocal(); scheduleSync(); }
   else if (a === "maxday") { state.settings.maxPerGiorno = Math.max(1, +t.value || 3); touch(state.settings); commit(); }
   else if (a === "maxsost") { state.settings.maxSostegnoGiorno = Math.max(0, +t.value); touch(state.settings); commit(); }
   else if (a === "recore") { const r = state.recuperi.find(x => x.id === t.dataset.id); r.ore = Math.max(0, +t.value || 0); touch(r); commit(); }
