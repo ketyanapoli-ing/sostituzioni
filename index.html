@@ -804,7 +804,8 @@ function vImpostazioni() {
 function vSyncBox() {
   const redirect = redirectUri(), tok = getTok();
   let h = `<label class="f">Client ID (Application ID di Microsoft Entra)</label><input id="cid" value="${esc(cfg.clientId || "")}" placeholder="00000000-0000-0000-0000-000000000000">
-  <div class="mut" style="margin-top:4px">Redirect URI da registrare: <code>${esc(redirect)}</code></div><div class="row" style="margin-top:10px">`;
+  <div class="mut" style="margin-top:4px">Redirect URI da registrare: <code>${esc(redirect)}</code></div>`;
+  h += `<div class="row" style="margin-top:10px">`;
   h += `<button class="b pri" data-act="login">${tok ? "Riaccedi" : "Accedi con Microsoft"}</button>`;
   if (tok) h += `<button class="b" data-act="syncnow">Sincronizza ora</button><button class="b bad" data-act="logout">Esci</button>`;
   h += `</div><div class="row" style="margin-top:10px"><button class="b bad" data-act="wipe">Esci e cancella i dati da questo dispositivo</button></div><p class="mut" style="margin-top:6px">Da usare sempre su un computer che non è tuo. I dati restano su OneDrive e li ritrovi riaccedendo.</p><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedi guida): da file locale funziona solo offline." : ""}</p>`;
@@ -917,7 +918,7 @@ document.addEventListener("click", e => {
   else if (a === "dispedit") editDisp(id);
   else if (a === "slot") { const s = t.dataset.s, sel = ui._disp.sel; sel.has(s) ? sel.delete(s) : sel.add(s); t.classList.toggle("on"); }
   else if (a === "dispsave") { const u = ui._disp; put("disp", { id: u.id, slot: [...u.sel].sort(), nota: $("#ed_nota").value, dv: $("#ed_dv").checked }); $("#dlg").close(); commit(); }
-  else if (a === "login") { cfg.clientId = ($("#cid").value || "").trim(); localStorage.setItem(CFGKEY, JSON.stringify(cfg)); login(); }
+  else if (a === "login") { cfg.clientId = ($("#cid").value || "").trim(); delete cfg.folder; localStorage.setItem(CFGKEY, JSON.stringify(cfg)); login(); }
   else if (a === "wipe") {
     const sync = !!getTok();
     if (!confirm(sync ? "Cancello dal browser tutti i dati, l'accesso e le impostazioni? Restano al sicuro su OneDrive e li ritrovi riaccedendo." : "Non sei collegato a OneDrive: i dati di questo dispositivo andrebbero persi. Scarica prima un backup. Cancellare comunque?")) return;
@@ -970,8 +971,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============ OneDrive (OAuth PKCE senza librerie) ============ */
-const AUTH = "https://login.microsoftonline.com/consumers/oauth2/v2.0", GRAPH = "https://graph.microsoft.com/v1.0", FILE = "/me/drive/special/approot:/sostituzioni.json";
-const SCOPE = "Files.ReadWrite.AppFolder offline_access";
+const AUTH = "https://login.microsoftonline.com/consumers/oauth2/v2.0", GRAPH = "https://graph.microsoft.com/v1.0", FILE_APP = "/me/drive/special/approot:/sostituzioni.json";
+const fileRef = () => FILE_APP;
+const scopeNow = () => "Files.ReadWrite.AppFolder offline_access";
 function redirectUri() { return location.origin === "null" ? "(file locale)" : location.origin + location.pathname.replace(/index\.html$/, ""); }
 function getTok() { try { return JSON.parse(localStorage.getItem(TOKKEY)); } catch (e) { return null; } }
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -980,10 +982,10 @@ async function login() {
   if (location.protocol === "file:") return toast("Serve un indirizzo https (vedi guida)");
   const ver = b64u(crypto.getRandomValues(new Uint8Array(48))), chal = b64u(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ver)));
   sessionStorage.setItem("sost_pkce", ver);
-  location.href = AUTH + "/authorize?" + new URLSearchParams({ client_id: cfg.clientId, response_type: "code", redirect_uri: redirectUri(), response_mode: "query", scope: SCOPE, code_challenge: chal, code_challenge_method: "S256", prompt: "select_account" });
+  location.href = AUTH + "/authorize?" + new URLSearchParams({ client_id: cfg.clientId, response_type: "code", redirect_uri: redirectUri(), response_mode: "query", scope: scopeNow(), code_challenge: chal, code_challenge_method: "S256", prompt: "select_account" });
 }
 async function tokenReq(params) {
-  const r = await fetch(AUTH + "/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: cfg.clientId, scope: SCOPE, ...params }) });
+  const r = await fetch(AUTH + "/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: cfg.clientId, scope: scopeNow(), ...params }) });
   const j = await r.json(); if (!r.ok) throw Object.assign(new Error(j.error_description || j.error || "errore token"), { code: j.error });
   const old = getTok() || {}; const t = { access: j.access_token, refresh: j.refresh_token || old.refresh, exp: Date.now() + (j.expires_in - 120) * 1000 };
   localStorage.setItem(TOKKEY, JSON.stringify(t)); return t;
@@ -1012,12 +1014,12 @@ async function sync(manual) {
     const H = { Authorization: "Bearer " + tok };
     for (let i = 0; i < 4; i++) {
       let etag = null, remote = null;
-      const m = await fetch(GRAPH + FILE, { headers: H });
-      if (m.ok) { etag = (await m.json()).eTag; const c = await fetch(GRAPH + FILE + ":/content", { headers: H }); if (c.ok) remote = await c.json(); }
+      const m = await fetch(GRAPH + fileRef(), { headers: H });
+      if (m.ok) { etag = (await m.json()).eTag; const c = await fetch(GRAPH + fileRef() + ":/content", { headers: H }); if (c.ok) remote = await c.json(); }
       else if (m.status !== 404) throw new Error("OneDrive " + m.status);
       if (remote && remote.v === 1) state = mergeState(state, remote);
       saveLocal();
-      const p = await fetch(GRAPH + FILE + ":/content", { method: "PUT", headers: { ...H, "Content-Type": "application/json", ...(etag ? { "If-Match": etag } : {}) }, body: JSON.stringify(state) });
+      const p = await fetch(GRAPH + fileRef() + ":/content", { method: "PUT", headers: { ...H, "Content-Type": "application/json", ...(etag ? { "If-Match": etag } : {}) }, body: JSON.stringify(state) });
       if (p.ok) { ui.sync = { st: "ok", msg: "ultimo salvataggio " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) }; render(); if (manual) toast("Sincronizzato"); syncing = false; return; }
       if (p.status !== 412 && p.status !== 409) throw new Error("OneDrive " + p.status);
     }
