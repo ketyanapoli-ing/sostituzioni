@@ -147,7 +147,7 @@ details.subs{margin:0 0 10px;padding-left:4px}details.subs summary{cursor:pointe
 @media (max-width:560px){.badge .bt{display:none}.badge{padding:0;width:34px;height:34px;justify-content:center;flex:none}.badge::before{width:12px;height:12px}.hero-date .dm{font-size:20px}}
 @media (max-width:560px){.badge.warn .bt,.badge.bad .bt{display:inline}.badge.warn,.badge.bad{width:auto;padding:0 11px}}
 
-.mp{margin:8px 0 0}.chip.sm{min-width:0;padding:6px 10px;font-size:.88em}.uncov{color:var(--warn,#b45309);font-weight:600}.b.sm{padding:4px 10px;min-height:32px}
+.mp{margin:8px 0 0}.chip.sm{min-width:0;padding:6px 10px;font-size:.88em}.b.sm{padding:4px 10px;min-height:32px}
 
 .dayh{margin:14px 0 6px;padding:7px 10px;border-radius:10px;background:var(--soft);font-weight:700;text-transform:capitalize}
 .rr{display:flex;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
@@ -157,6 +157,8 @@ details.subs{margin:0 0 10px;padding-left:4px}details.subs summary{cursor:pointe
 .rg.on{border-color:#2e8b57;background:rgba(46,139,87,.16)}
 .rg input{width:26px;height:26px}
 .rm .tag{font-size:13px;padding:5px 9px}
+.uncov{background:var(--badbg);color:var(--bad);border:1.5px solid var(--bad);white-space:nowrap;display:inline-block;font-size:13px}
+.rm .uncov{background:none;border:0;padding:0;border-radius:0;font-size:14px;font-weight:700;color:var(--bad);white-space:normal}.rm .uncov::before{content:"● ";font-size:.8em}
 </style>
 </head>
 <body>
@@ -737,7 +739,7 @@ const meseLabel = k => MESI[+k.slice(5) - 1] + " " + k.slice(0, 4);
 function regRows() {
   if (ui.regMode === "mesi") { const ms = (ui.regMonths || []).slice().sort(), set = new Set(ms); return { a: ms[0] ? ms[0] + "-01" : "", b: ms.length ? ms[ms.length - 1] + "-31" : "", label: ms.length ? ms.map(meseLabel).join(", ") : "nessun mese scelto", rows: subs().filter(s => set.has(s.data.slice(0, 7))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
   const [a, b] = rangeOf(ui.regMode, ui.regDate); return { a, b, label: `dal ${fmtShort(a)} al ${fmtShort(b)}`, rows: subs().filter(s => s.data >= a && s.data <= b).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
-const statoNoSub = s => s.nosub ? "non sostituita (sostegno)" : s.auto === false ? "da gestire a mano" : s.pending ? "da assegnare" : "scoperta";
+const statoNoSub = s => s.nosub ? "non sostituita" : s.auto === false ? "da gestire a mano" : s.pending ? "da assegnare" : "scoperta";
 /* assenze registrate che toccano il periodo del report (anche senza ore da coprire) */
 function regAbs() {
   const { a, b } = regRows(), ms = ui.regMode === "mesi" ? new Set(ui.regMonths || []) : null;
@@ -748,12 +750,12 @@ const tipoReg = t => ({ 1: "a disp. / alt. IRC", 2: "sostegno", 3: "recupero", 4
 function vRegistro() {
   if (!state.orario) return needsData();
   const { label, rows } = regRows(), subbed = rows.filter(s => s.sostituto), ab = regAbs();
-  const tr = subbed.filter(s => s.firmata).length;
+  const tr = rows.filter(s => s.firmata).length;
   let h = vRecuperi() + `<div class="card"><h2>Report sostituzioni</h2><div class="row"><select data-act="regmode">${["giorno", "settimana", "mese", "mesi"].map(m => `<option value="${m}" ${ui.regMode === m ? "selected" : ""}>${m === "mesi" ? "più mesi" : m}</option>`).join("")}</select>${ui.regMode === "mesi" ? "" : `<input type="date" value="${ui.regDate}" data-act="regdate">`}<button class="b" data-act="xlsx">Esporta Excel</button></div>
   ${ui.regMode === "mesi" ? `<div class="chips" style="margin-top:10px">${annoScolasticoMesi().map(k => `<span class="chip ${(ui.regMonths || []).includes(k) ? "on" : ""}" data-act="regmonth" data-k="${k}"><b>${MESI[+k.slice(5) - 1]}</b><small>${k.slice(0, 4)}</small></span>`).join("")}</div><div class="row" style="margin-top:8px"><button class="b sm" data-act="regmonthsall">Tutti</button><button class="b sm" data-act="regmonthsnone">Nessuno</button></div>` : ""}</div>`;
   h += `<div class="card"><h3>Assenze nel periodo (${ab.length})</h3>${ab.length ? ab.map(x => { const st = absStat(x); return `<div class="sub"><div class="m"><b>${esc(nice(x.docente))}</b> · ${esc(fmtDate(x.dal))}${x.al && x.al !== x.dal ? " → " + esc(fmtDate(x.al)) : ""}<div class="mut">${x.ore === "tutto" ? "tutto il giorno" : "ore " + x.ore.join(", ")} · ${esc(x.motivo || "")} · ${st.tot ? `${st.sost} ${st.sost === 1 ? "ora sostituita" : "ore sostituite"}${st.tot - st.sost ? `, ${st.tot - st.sost} non sostituite` : ""}` : "nessuna ora da coprire"}</div></div></div>`; }).join("") : '<p class="mut">Nessuna assenza nel periodo.</p>'}</div>`;
   h += `<div class="card"><h3>${esc(label)} — ${rows.length} ${rows.length === 1 ? "ora di assenza" : "ore di assenza"}${rows.length ? `, ${subbed.length} sostituite, ${tr} già sul registro` : ""}</h3>
-  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spunta «Sul registro» quando hai segnato la sostituzione sul registro elettronico.</p>${rows.map((s, i) => (i && rows[i - 1].data === s.data ? "" : `<div class="dayh">${esc(fmtDate(s.data))}</div>`) + `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div>${s.sostituto ? `<label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label>` : ""}</div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
+  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spunta «Sul registro» quando hai segnato l'ora sul registro elettronico.</p>${rows.map((s, i) => (i && rows[i - 1].data === s.data ? "" : `<div class="dayh">${esc(fmtDate(s.data))}</div>`) + `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
   const tot = {}; subbed.forEach(s => { const t = tot[s.sostituto] = tot[s.sostituto] || { n: 0, 1: 0, 2: 0, 3: 0, 4: 0, 0: 0 }; t.n++; t[s.tier || 0]++; });
   const names = Object.keys(tot).sort();
   if (names.length) h += `<div class="card"><h3>Riepilogo per docente</h3><div class="scroll"><table class="t"><thead><tr><th>Docente</th><th>Totale</th><th>A disp./alt.</th><th>Sostegno</th><th>Recupero</th><th>Eccedenti</th><th>Altro</th></tr></thead><tbody>${names.map(n => `<tr><td>${esc(nice(n))}</td><td>${tot[n].n}</td><td>${tot[n][1] || ""}</td><td>${tot[n][2] || ""}</td><td>${tot[n][3] || ""}</td><td>${tot[n][4] || ""}</td><td>${tot[n][0] || ""}</td></tr>`).join("")}</tbody></table></div></div>`;
@@ -803,7 +805,7 @@ function makeXlsx(sheets) {
 }
 function exportXlsx() {
   const { rows, label } = regRows(), subbed = rows.filter(s => s.sostituto);
-  const sost = [["Data", "Ora", "Orario", "Classe", "Docente assente", "Docente sostituto", "Tipo", "Sul registro"]].concat(rows.map(s => [{ d: s.data }, s.ora, oraLabel(s.ora), s.classe, nice(s.assente), s.sostituto ? nice(s.sostituto) : "", s.sostituto ? tipoReg(s.tier) + (s.tier === 3 && s.anticipo ? " (anticipo, da concordare)" : "") : statoNoSub(s), s.sostituto ? (s.firmata ? "sì" : "no") : ""]));
+  const sost = [["Data", "Ora", "Orario", "Classe", "Docente assente", "Docente sostituto", "Tipo", "Sul registro"]].concat(rows.map(s => [{ d: s.data }, s.ora, oraLabel(s.ora), s.classe, nice(s.assente), s.sostituto ? nice(s.sostituto) : "", s.sostituto ? tipoReg(s.tier) + (s.tier === 3 && s.anticipo ? " (anticipo, da concordare)" : "") : statoNoSub(s), s.firmata ? "sì" : "no"]));
   const tot = {}; subbed.forEach(s => { const t = tot[s.sostituto] = tot[s.sostituto] || { n: 0, 1: 0, 2: 0, 3: 0, 4: 0, 0: 0 }; t.n++; t[s.tier || 0]++; });
   const riep = [["Docente", "Totale", "A disp./alt. IRC", "Già in classe", "Recupero", "Ore eccedenti", "Altro"]].concat(Object.keys(tot).sort().map(n => [nice(n), tot[n].n, tot[n][1] || 0, tot[n][2] || 0, tot[n][3] || 0, tot[n][4] || 0, tot[n][0] || 0]));
   const sheets = [{ name: "Sostituzioni", rows: sost, widths: [12, 6, 13, 9, 20, 20, 30, 12] }, { name: "Riepilogo docenti", rows: riep, widths: [22, 9, 16, 14, 10, 14, 8] }, { name: "Assenze", rows: [["Docente assente", "Dal", "Al", "Ore", "Motivo", "Ore da coprire", "Sostituite", "Non sostituite", "Nota"]].concat(regAbs().map(x => { const st = absStat(x); return [nice(x.docente), { d: x.dal }, { d: x.al || x.dal }, x.ore === "tutto" ? "tutto il giorno" : x.ore.join(", "), x.motivo || "", st.tot, st.sost, st.tot - st.sost, x.nota || ""]; })), widths: [22, 12, 12, 16, 16, 14, 11, 14, 30] }];
