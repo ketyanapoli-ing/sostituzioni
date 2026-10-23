@@ -647,6 +647,14 @@ function oreDocente(f) {
   return out;
 }
 function oreChips(dr) {
+  if (dr.docente && dr.dal && dr.al && dr.al > dr.dal) {
+    const days = E.datesBetween(dr.dal, dr.al).filter(x => E.dayCode(x) && !closedOn(x));
+    if (days.length > 1) {
+      dr.tutto = true; dr.ore = [];
+      const rows = days.map(x => { const n = Object.keys(oreDocente({ ...dr, dal: x })).map(Number).sort((a, b) => a - b); return `<div class="sub"><div class="m"><b>${esc(fmtDate(x))}</b> · ${n.length ? n.map(k => k + "ª").join(" ") + ` <span class="mut">(${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : '<span class="mut">nessuna lezione</span>'}</div></div>`; }).join("");
+      return `<label class="f">Ore</label><div class="note">Assenza di più giorni: vale <b>tutto il giorno</b> per ognuno dei ${days.length} giorni. Le ore da sostituire sono queste:</div>${rows}<p class="mut" style="margin:6px 0 0">Per assentarsi solo alcune ore, lascia vuoto «Al» (un giorno solo).</p>`;
+    }
+  }
   const hrs = oreDocente(dr), nums = Object.keys(hrs).map(Number).sort((a, b) => a - b);
   let h = '<label class="f">Ore</label>';
   if (!dr.docente) return h + '<p class="mut" style="margin:0">Scegli prima il docente: vedrai solo le ore in cui è a scuola.</p>';
