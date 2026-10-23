@@ -554,19 +554,18 @@ function optList(need, currentSubs, selected, act, idx) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "24/10/2026 · 6";
+const BUILD = "24/10/2026 · 8";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
 /* ---- CALENDARIO SCOLASTICO: festività, ponti e chiusure ---- */
 const VENETO_2627 = { anno: { inizio: "2026-09-10", fine: "2027-06-08" }, chiusure: [
-  ["2026-10-04", "", "San Francesco d'Assisi"], ["2026-10-30", "2026-11-02", "Ponte di Ognissanti"],
-  ["2026-12-07", "", "Ponte dell'Immacolata"], ["2026-12-08", "", "Immacolata Concezione"],
+  ["2026-10-04", "", "San Francesco d'Assisi"],   ["2026-12-07", "", "Ponte dell'Immacolata"], ["2026-12-08", "", "Immacolata Concezione"],
   ["2026-12-24", "2027-01-05", "Vacanze di Natale"], ["2027-01-06", "", "Epifania"],
-  ["2027-02-08", "2027-02-10", "Carnevale e Ceneri"], ["2027-02-11", "2027-02-13", "Giornate dello sport"],
+  ["2027-02-08", "2027-02-10", "Carnevale e Ceneri"],
   ["2027-03-25", "2027-03-30", "Vacanze di Pasqua"], ["2027-04-25", "", "Festa della Liberazione"],
   ["2027-04-29", "2027-04-30", "Ponte del 1° maggio"], ["2027-05-01", "", "Festa del Lavoro"],
-  ["2027-05-31", "2027-06-01", "Ponte della Festa della Repubblica"], ["2027-06-02", "", "Festa della Repubblica"]] };
+  ["2027-06-02", "", "Festa della Repubblica"]] };
 function applyVeneto() {
   const S = state.settings; S.anno = { ...VENETO_2627.anno }; S.chiusure = S.chiusure || [];
   for (const [dal, al, nota] of VENETO_2627.chiusure) if (!S.chiusure.some(c => c.dal === dal && (c.al || "") === al)) S.chiusure.push({ id: uid(), dal, al, nota });
@@ -576,6 +575,10 @@ const closedOn = d => E.closedNote(state, d);
 function schoolStep(d, dir) { let x = E.addDays(d, dir); for (let i = 0; i < 400 && closedOn(x); i++) x = E.addDays(x, dir); return x; }
 function firstSchoolDay(d) { return closedOn(d) ? schoolStep(d, 1) : d; }
 function ensureCalendar() {
+  /* correzioni al calendario preimpostato (chiusure che la scuola non ha): tolte anche dai dati già salvati */
+  const S = state.settings, ERRATE = [["2026-10-30", "2026-11-02", "Ponte di Ognissanti"], ["2027-02-11", "2027-02-13", "Giornate dello sport"], ["2027-05-31", "2027-06-01", "Ponte della Festa della Repubblica"]];
+  const errata = c => ERRATE.some(([a, b, n]) => c.dal === a && c.al === b && c.nota === n);
+  if (S.chiusure && S.chiusure.some(errata)) { S.chiusure = S.chiusure.filter(c => !errata(c)); touch(S); saveLocal(); scheduleSync(); }
   if (state.settings.chiusure !== undefined || !state.orario) return;
   if (getTok() && ui.sync.st !== "ok") return; // prima si scarica OneDrive, per non sovrascrivere modifiche fatte altrove
   applyVeneto(); saveLocal(); scheduleSync(); setTimeout(() => toast("Calendario scolastico del Veneto 2026/27 caricato: da controllare in Impostazioni"), 400);
