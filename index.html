@@ -246,6 +246,20 @@ header.top .badge{justify-self:end;margin-left:0}
 header.top .hero-date{padding:0 12px}@media (max-width:420px){header.top .hero-date{padding:0 4px}}
 
 nav.tabs button{font-size:12px}.tag{font-size:12px}
+
+/* calendario mensile */
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.calhead h3{margin:0;font:700 19px var(--serif)}
+.calhead .ic{background:var(--soft);color:var(--ink)}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.calgrid small{color:var(--mut);font-weight:600;font-size:12px;padding:4px 0}
+.cd{position:relative;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:600 16px var(--sans);cursor:pointer;padding:0}
+.cd.off{background:var(--soft);color:var(--mut);font-weight:400}
+.cd.now{border-color:var(--hl);box-shadow:inset 0 0 0 1px var(--hl)}
+.cd.sel{background:var(--board);color:var(--chalk);border-color:var(--board)}
+.cd i{position:absolute;left:50%;bottom:5px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--bad)}
+.cd.sel i{background:var(--hl)}
+header.top .calbtn{justify-self:start}
+.hero-date{cursor:pointer}
 </style>
 </head>
 <body>
@@ -554,7 +568,7 @@ function optList(need, currentSubs, selected, act, idx) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "24/10/2026 · 8";
+const BUILD = "24/10/2026 · 9";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -586,10 +600,27 @@ function ensureCalendar() {
 const TABTITLE = { oggi: "Oggi", assenze: "Assenze", registro: "Report", promemoria: "Promemoria", impostazioni: "Impostazioni" };
 const nowHM = () => new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 setInterval(() => { const e = document.querySelector(".clk"); if (e && e.textContent) e.textContent = "ore " + nowHM(); }, 20000);
+const MESI_L = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+function calPicker(month) {
+  ui.calMonth = month;
+  const [y, m] = month.split("-").map(Number), off = (new Date(y, m - 1, 1).getDay() + 6) % 7, n = new Date(y, m, 0).getDate();
+  const pad = x => String(x).padStart(2, "0"), mark = new Set(subs().map(x => x.data)), today = todayStr();
+  const prev = m === 1 ? `${y - 1}-12` : `${y}-${pad(m - 1)}`, next = m === 12 ? `${y + 1}-01` : `${y}-${pad(m + 1)}`;
+  let cells = "";
+  for (let i = 0; i < off; i++) cells += "<span></span>";
+  for (let d = 1; d <= n; d++) {
+    const ds = `${y}-${pad(m)}-${pad(d)}`, cl = closedOn(ds);
+    cells += `<button type="button" class="cd ${cl ? "off" : ""} ${ds === ui.date ? "sel" : ""} ${ds === today ? "now" : ""}" data-act="calday" data-date="${ds}" ${cl ? `title="${esc(cl)}"` : ""}>${d}${mark.has(ds) ? '<i></i>' : ""}</button>`;
+  }
+  dlg(`<div class="calhead"><button class="ic" data-act="calmonth" data-m="${prev}" aria-label="Mese precedente">‹</button><h3>${MESI_L[m - 1].replace(/^./, c => c.toUpperCase())} ${y}</h3><button class="ic" data-act="calmonth" data-m="${next}" aria-label="Mese successivo">›</button></div>
+  <div class="calgrid">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map(x => `<small>${x}</small>`).join("")}${cells}</div>
+  <p class="mut" style="margin:10px 0 0;font-size:13px">Il pallino indica i giorni con assenze registrate; i giorni in grigio sono festivi o di chiusura.</p>
+  <div class="row" style="margin-top:12px"><button class="b" data-act="caltoday">Andare a oggi</button><button class="b" data-act="dlgclose">Chiudere</button></div>`);
+}
 function renderTop() {
   const d = ui.date, dt = new Date(d + "T12:00:00"), wd = dt.toLocaleDateString("it-IT", { weekday: "long" }), dm = dt.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
-  $("#top").innerHTML = `<span></span><div class="dnav"><button class="ic" data-act="dayprev" aria-label="Giorno precedente">‹</button>
-  <label class="hero-date"><span class="dm">${esc(wd.charAt(0).toUpperCase() + wd.slice(1))} ${esc(dm)} ${dt.getFullYear()}</span><span class="wd clk">${d === todayStr() ? "ore " + nowHM() : ""}</span><input type="date" value="${d}" data-act="daypick" aria-label="Scegliere la data"></label>
+  $("#top").innerHTML = `<button class="ic calbtn" data-act="calopen" aria-label="Aprire il calendario mensile" title="Calendario"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></button><div class="dnav"><button class="ic" data-act="dayprev" aria-label="Giorno precedente">‹</button>
+  <span class="hero-date" data-act="calopen" role="button" tabindex="0"><span class="dm">${esc(wd.charAt(0).toUpperCase() + wd.slice(1))} ${esc(dm)} ${dt.getFullYear()}</span><span class="wd clk">${d === todayStr() ? "ore " + nowHM() : ""}</span></span>
   <button class="ic" data-act="daynext" aria-label="Giorno successivo">›</button></div><button id="syncbadge" class="badge" onclick="ui.tab='impostazioni';render()">☁</button>`;
   let b = "";
   if (ui.tab === "oggi" && state.orario && closedOn(d)) {
@@ -1116,6 +1147,10 @@ document.addEventListener("click", e => {
   if (a === "goto") { ui.tab = t.dataset.tab; render(); }
   else if (a === "dayprev") { ui.date = schoolStep(ui.date, -1); syncFormDate(); render(); }
   else if (a === "daynext") { ui.date = schoolStep(ui.date, 1); syncFormDate(); render(); }
+  else if (a === "calopen") calPicker(ui.date.slice(0, 7));
+  else if (a === "calmonth") calPicker(t.dataset.m);
+  else if (a === "calday") { $("#dlg").close(); ui.date = t.dataset.date; ui.tab = "oggi"; syncFormDate(); render(); window.scrollTo(0, 0); }
+  else if (a === "caltoday") { $("#dlg").close(); ui.date = todayStr(); ui.tab = "oggi"; syncFormDate(); render(); }
   else if (a === "daytoday") { ui.date = todayStr(); render(); }
   else if (a === "newabs") { ui.form = null; ui.draft = null; ui.form = { docente: "", dal: t.dataset.date, al: "", tutto: true, ore: [], motivo: "Malattia", nota: "", promemoria: true }; ui.tab = "assenze"; render(); }
   else if (a === "gotoday") { ui.date = t.dataset.date; ui.tab = "oggi"; render(); }
