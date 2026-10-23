@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E3C8C">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <script>try{var __t=localStorage.getItem("sost_theme");if(__t)document.documentElement.dataset.theme=__t}catch(e){}</script>
@@ -14,6 +15,7 @@
  --hl:#FFD84D;--hl-ink:#2E2500;--pen:#1F5FE0;--pen-bg:#E1EAFD;
  --ok:#16794C;--okbg:#E1F3EA;--bad:#C23B22;--badbg:#FCE9E5;--warn:#8A5A00;--warnbg:#FFF1CF;
  --t1:#16794C;--t2:#6A3FB5;--t3:#A15C00;--t4:#0E7490;--t0:#566786;
+ --sans:"Source Sans 3","Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;
@@ -30,21 +32,21 @@
  --t1:#5BD39B;--t2:#BD9CF2;--t3:#F2BF5C;--t4:#5ED0E8;--t0:#9DB0D0}
 :root[data-theme=light]{color-scheme:light}
 *{box-sizing:border-box}html,body{margin:0}
-body{font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:84px;-webkit-text-size-adjust:100%}
+body{font:17px/1.45 var(--sans);background:var(--bg);color:var(--ink);padding-bottom:84px;-webkit-text-size-adjust:100%}
 :focus-visible{outline:3px solid var(--pen);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* intestazione */
 header.top{position:sticky;top:0;z-index:5;background:var(--board);color:var(--chalk);padding:calc(6px + env(safe-area-inset-top)) max(10px,calc((100% - 900px)/2 + 10px)) 4px;display:flex;align-items:center;gap:4px}
 .band{background:var(--board);color:var(--chalk);padding:2px max(14px,calc((100% - 900px)/2 + 14px)) 12px;border-radius:0 0 18px 18px;margin-bottom:12px}
-.badge{font:600 12px/1 system-ui;padding:7px 11px;border-radius:99px;background:var(--board2);color:var(--chalk);white-space:nowrap;cursor:pointer;border:0;display:inline-flex;align-items:center;gap:6px}
+.badge{font:600 12px/1 var(--sans);padding:7px 11px;border-radius:99px;background:var(--board2);color:var(--chalk);white-space:nowrap;cursor:pointer;border:0;display:inline-flex;align-items:center;gap:6px}
 .badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--chalk2)}
 .badge.ok::before{background:#5BD39B}.badge.warn::before{background:var(--hl)}.badge.bad::before{background:#FF8F7A}
 main{max-width:900px;margin:0 auto;padding:0 14px 14px}
 
 /* navigazione */
 nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs button{flex:1;border:0;background:none;padding:10px 2px 8px;font:500 11px/1.1 system-ui;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative}
+nav.tabs button{flex:1;border:0;background:none;padding:10px 2px 8px;font:500 11px/1.1 var(--sans);color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative}
 nav.tabs button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button.on{color:var(--ink);font-weight:700}
 nav.tabs button.on::before{content:"";position:absolute;top:0;left:22%;right:22%;height:4px;border-radius:0 0 4px 4px;background:var(--hl)}
@@ -52,12 +54,12 @@ nav.tabs button.on svg{stroke:var(--board)}@media (prefers-color-scheme:dark){:r
 
 /* fascia in alto (data + riepilogo) */
 .hero-date{flex:1;text-align:center;line-height:1.1;position:relative;cursor:pointer;display:block;min-width:0}
-.hero-date .wd{font:500 14px system-ui;color:var(--chalk2);text-transform:capitalize}
+.hero-date .wd{font:500 14px var(--sans);color:var(--chalk2);text-transform:capitalize}
 .hero-date .dm{font:700 21px var(--serif)}
 .hero-date input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .ic{width:44px;height:44px;flex:none;border-radius:50%;border:0;background:var(--board2);color:var(--chalk);font-size:24px;line-height:1;cursor:pointer}
 header.top .badge{margin-left:4px}
-.band .link{background:none;border:0;color:var(--hl);font:600 13px system-ui;cursor:pointer;text-decoration:underline;padding:4px}
+.band .link{background:none;border:0;color:var(--hl);font:600 13px var(--sans);cursor:pointer;text-decoration:underline;padding:4px}
 .hero-row{display:flex;gap:8px;align-items:center;margin-top:2px;flex-wrap:wrap}
 .tab-title{font:700 19px var(--serif);margin:0;flex:1}
 .stat{background:var(--board2);border-radius:12px;padding:6px 11px;font-size:13px;color:var(--chalk2);white-space:nowrap}
@@ -90,7 +92,7 @@ header.top .badge{margin-left:4px}
 .page-title{font:700 26px/1.1 var(--serif);margin:18px 2px 12px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row.sp{justify-content:space-between}
 .mut{color:var(--mut);font-size:14px}.grow{flex:1}
-button.b,a.b,label.b{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:11px 16px;font:600 15px/1.1 system-ui;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:44px}
+button.b,a.b,label.b{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:11px 16px;font:600 15px/1.1 var(--sans);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;min-height:44px}
 button.b.pri,label.b.pri{background:var(--pen);color:#fff;border-color:var(--pen)}@media (prefers-color-scheme:dark){:root:not([data-theme=light]) button.b.pri,:root:not([data-theme=light]) label.b.pri{color:#0B1630}}:root[data-theme=dark] button.b.pri,:root[data-theme=dark] label.b.pri{color:#0B1630}
 button.b.hl{background:var(--hl);color:var(--hl-ink);border-color:var(--hl);font-weight:700}
 button.b.sm{padding:7px 12px;font-size:13px;min-height:36px;border-radius:10px}button.b.bad{color:var(--bad)}
@@ -99,16 +101,16 @@ input[type=checkbox]{min-height:0;width:20px;height:20px}
 label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:600}label.f+input,label.f+select,label.f+textarea{width:100%}
 .chips{display:flex;gap:7px;flex-wrap:wrap}.chip{border:1.5px solid var(--line);border-radius:12px;min-width:46px;padding:10px 14px;cursor:pointer;user-select:none;font-weight:600;text-align:center;background:var(--surface)}.chip.on{background:var(--board);color:var(--chalk);border-color:var(--board)}
 .sub{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}.sub:first-of-type{border-top:0}
-.sub .h{min-width:62px;font:700 17px/1.1 var(--serif)}.sub .h small{display:block;font:400 11px system-ui;color:var(--mut);margin-top:2px}
+.sub .h{min-width:62px;font:700 17px/1.1 var(--serif)}.sub .h small{display:block;font:400 11px var(--sans);color:var(--mut);margin-top:2px}
 .sub .m{flex:1;min-width:0}.sub .m b{font-weight:700}
-.tag{font:600 11px/1 system-ui;padding:4px 8px;border-radius:99px;background:color-mix(in srgb,currentColor 12%,transparent);white-space:nowrap}
+.tag{font:600 11px/1 var(--sans);padding:4px 8px;border-radius:99px;background:color-mix(in srgb,currentColor 12%,transparent);white-space:nowrap}
 .tag.t1{color:var(--t1)}.tag.t2{color:var(--t2)}.tag.t3{color:var(--t3)}.tag.t4{color:var(--t4)}.tag.t0{color:var(--t0)}
-.uncov{background:var(--bad);color:#fff;border-radius:99px;padding:4px 10px;font:700 12px/1 system-ui}
+.uncov{background:var(--bad);color:#fff;border-radius:99px;padding:4px 10px;font:700 12px/1 var(--sans)}
 .note{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:11px 13px;font-size:14px;margin:10px 0}
 .note.bad{background:var(--badbg);color:var(--bad)}
 .ok-note{background:var(--okbg);color:var(--ok);border-radius:12px;padding:11px 13px;font-size:14px;margin:10px 0}
 .empty{text-align:center;padding:26px 14px;color:var(--mut)}.empty b{display:block;color:var(--ink);font:700 18px var(--serif);margin-bottom:4px}
-table.t{width:100%;border-collapse:collapse;font-size:14px}table.t th,table.t td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}table.t th{font-weight:700;background:var(--soft);white-space:nowrap}
+table.t{width:100%;border-collapse:collapse;font-size:15px;font-family:var(--sans)}table.t th,table.t td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}table.t th{font-weight:700;background:var(--soft);white-space:nowrap}
 .scroll{overflow-x:auto;margin:0 -4px}
 dialog{border:0;border-radius:20px;max-width:min(560px,94vw);width:100%;background:var(--surface);color:var(--ink);padding:20px;box-shadow:0 20px 60px #0A1530aa}
 dialog[open]{animation:pop .16s ease-out}@keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}}
@@ -118,7 +120,7 @@ details.card>summary{cursor:pointer;font:700 17px var(--serif)}
 code{background:var(--soft);padding:2px 5px;border-radius:5px;font-size:13px;overflow-wrap:anywhere}
 
 .chip b{display:block;font-size:1.05em}.chip small{display:block;font-size:.72em;font-weight:500;opacity:.85;margin-top:1px;white-space:nowrap}
-.note .link{background:none;border:0;color:inherit;font:700 14px system-ui;text-decoration:underline;cursor:pointer;padding:2px}.b:disabled{opacity:.4;cursor:default}
+.note .link{background:none;border:0;color:inherit;font:700 14px var(--sans);text-decoration:underline;cursor:pointer;padding:2px}.b:disabled{opacity:.4;cursor:default}
 
 .opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .grp{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--t0);margin:10px 0 0}
@@ -160,6 +162,50 @@ details.subs{margin:0 0 10px;padding-left:4px}details.subs summary{cursor:pointe
 .uncov{background:var(--badbg);color:var(--bad);border:1.5px solid var(--bad);white-space:nowrap;display:inline-block;font-size:13px}
 .rm .uncov{background:none;border:0;padding:0;border-radius:0;font-size:14px;font-weight:700;color:var(--bad);white-space:normal}.rm .uncov::before{content:"● ";font-size:.8em}
 .recbtns .b.sm{flex:0 0 auto;min-height:34px;font-size:14px;padding:5px 12px}.recbtns{margin-top:6px}
+
+/* --- fascia alta: scuola e ora --- */
+header.top{flex-wrap:wrap}
+header.top .school{flex:0 0 100%;text-align:center;font:500 11px/1.2 var(--sans);color:var(--chalk2);padding:2px 0 1px;letter-spacing:.01em}
+.hero-date .clk{font-weight:600}
+
+/* --- elenco ore di Oggi più compatto --- */
+.hour{gap:8px;padding:0 0 2px}
+.ruler{width:48px;padding-top:8px}.ruler b{font-size:18px}.ruler small{font-size:10px;margin-top:2px}
+.slot{grid-template-columns:36px 1fr;gap:4px 9px;padding:7px 9px;margin:0 0 6px;border-radius:12px}
+.cls{min-width:36px;height:36px;font-size:14px;border-radius:9px}
+.who .l1{font-size:14px}.who .l2{font-size:12px}
+.slot .tag{font-size:10px;padding:3px 7px}
+.act{padding-top:5px;margin-top:0}
+.act .b.sm{min-height:30px;padding:4px 10px;font-size:12px}
+.chk{font-size:11px}.chk input{width:17px;height:17px}
+
+/* --- tabella unica ore da recuperare --- */
+.rt{display:block}
+.rt-head,.rt-row{display:grid;grid-template-columns:1.4fr 1fr .9fr .8fr 1.3fr 128px;gap:8px;align-items:center}
+.rt-head{font-weight:700;font-size:13px;background:var(--soft);border-radius:10px;padding:8px 10px;color:var(--mut)}
+.rt-row{padding:9px 10px;border-bottom:1px solid var(--line)}
+.rt-row input{width:64px;min-height:36px;padding:4px 8px}
+.rt-row .ac{display:flex;gap:6px}.rt-row small{color:var(--mut)}
+@media (max-width:700px){
+  .rt-head{display:none}
+  .rt-row{grid-template-columns:repeat(4,1fr);gap:6px 8px}
+  .rt-row .nm{grid-column:1/-1;font-size:1.05em}
+  .rt-row .c[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--mut);font-weight:600}
+  .rt-row .c[data-l="Scadenza"]{grid-column:1/-1}
+  .rt-row .ac{grid-column:1/-1}
+}
+
+/* --- report: versione larga su una riga per sostituzione --- */
+@media (min-width:700px){
+  .rr{padding:6px 4px}
+  .rm{display:flex;gap:22px;align-items:center;flex-wrap:nowrap;line-height:1.3}
+  .rm>div{flex:1 1 0;min-width:0}
+
+
+  .rg{flex-direction:row;min-width:0;padding:6px 12px;gap:8px;font-size:.85em}
+  .rg input{width:20px;height:20px}
+}
+.hero-date .clk{text-transform:none}
 </style>
 </head>
 <body>
@@ -400,7 +446,7 @@ const Engine = (() => {
 })();
 if (typeof module !== "undefined") module.exports = Engine;
 </script>
-<script>/* Sostituzioni docenti - app personale (PWA). Dati: localStorage + file JSON nel tuo OneDrive. */
+<script>/* Sostituzioni docenti - app personale (PWA). Dati: localStorage + file JSON in OneDrive. */
 "use strict";
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -428,7 +474,7 @@ let cfg = (() => { try { return JSON.parse(localStorage.getItem(CFGKEY)) || {}; 
 const ui = { tab: "oggi", date: todayStr(), draft: null, regMode: "settimana", regDate: todayStr(), sync: { st: "off", msg: "" } };
 
 function touch(r) { r.upd = Date.now(); return r; }
-function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast("Spazio del browser pieno: esporta un backup"); } }
+function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast("Spazio del browser pieno: esportare un backup"); } }
 function commit() { saveLocal(); scheduleSync(); render(); }
 function put(coll, rec) { rec.id = rec.id || uid(); touch(rec); const i = state[coll].findIndex(r => r.id === rec.id); if (i >= 0) state[coll][i] = rec; else state[coll].push(rec); return rec; }
 function del(coll, id) { const r = state[coll].find(x => x.id === id); if (r) { r.del = true; touch(r); } }
@@ -463,7 +509,7 @@ function optList(need, currentSubs, selected, act, idx) {
   if (selected && !c.some(x => x.docente === selected) && !man.some(x => x.docente === selected))
     h += `<div class="grp">Scelta attuale</div><button type="button" class="opt sel" ${attr(selected + "|0|0")}><span class="mk"></span><span><b>${esc(nice(selected))}</b></span></button>`;
   if (man.length) h += `<div class="grp">Scelta manuale · hanno lezione quel giorno e in quest'ora sono liberi</div><div class="mchips">` + man.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0")}>${esc(nice(x.docente))}</button>`).join("") + `</div>`;
-  return h + `<button type="button" class="opt none ${!selected ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>lascia l'ora scoperta</small></span></button></div>`;
+  return h + `<button type="button" class="opt none ${!selected ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>l'ora resta scoperta</small></span></button></div>`;
 }
 
 /* ============ rendering ============ */
@@ -490,14 +536,16 @@ function firstSchoolDay(d) { return closedOn(d) ? schoolStep(d, 1) : d; }
 function ensureCalendar() {
   if (state.settings.chiusure !== undefined || !state.orario) return;
   if (getTok() && ui.sync.st !== "ok") return; // prima si scarica OneDrive, per non sovrascrivere modifiche fatte altrove
-  applyVeneto(); saveLocal(); scheduleSync(); setTimeout(() => toast("Ho caricato il calendario scolastico del Veneto 2026/27: controllalo in Impostazioni"), 400);
+  applyVeneto(); saveLocal(); scheduleSync(); setTimeout(() => toast("Calendario scolastico del Veneto 2026/27 caricato: da controllare in Impostazioni"), 400);
 }
 const TABTITLE = { oggi: "Oggi", assenze: "Assenze", registro: "Report", promemoria: "Promemoria", impostazioni: "Impostazioni" };
+const nowHM = () => new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+setInterval(() => { const e = document.querySelector(".clk"); if (e && e.textContent) e.textContent = " · ore " + nowHM(); }, 20000);
 function renderTop() {
   const d = ui.date, dt = new Date(d + "T12:00:00"), wd = dt.toLocaleDateString("it-IT", { weekday: "long" }), dm = dt.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
   $("#top").innerHTML = `<button class="ic" data-act="dayprev" aria-label="Giorno precedente">‹</button>
-  <label class="hero-date"><span class="wd">${esc(wd)}</span> <span class="dm">${esc(dm)}</span><input type="date" value="${d}" data-act="daypick" aria-label="Scegli la data"></label>
-  <button class="ic" data-act="daynext" aria-label="Giorno successivo">›</button><button id="syncbadge" class="badge" onclick="ui.tab='impostazioni';render()">☁</button>`;
+  <label class="hero-date"><span class="wd">${esc(wd)}<span class="clk">${d === todayStr() ? " · ore " + nowHM() : ""}</span></span> <span class="dm">${esc(dm)} ${dt.getFullYear()}</span><input type="date" value="${d}" data-act="daypick" aria-label="Scegliere la data"></label>
+  <button class="ic" data-act="daynext" aria-label="Giorno successivo">›</button><button id="syncbadge" class="badge" onclick="ui.tab='impostazioni';render()">☁</button><div class="school">I.C. «E. De Amicis» - Eraclea · Plesso «L. Da Vinci»</div>`;
   let b = "";
   if (ui.tab === "oggi" && state.orario && closedOn(d)) {
     b = `<div class="hero-row"><span class="stat">${esc(closedOn(d))}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>`;
@@ -516,11 +564,11 @@ function render() {
 }
 function renderSyncBadge() {
   const b = $("#syncbadge"); if (!b) return; const s = ui.sync;
-  const map = { off: ["", "☁ non collegato"], ok: ["ok", "☁ sincronizzato"], busy: ["", "☁ sincronizzo…"], offline: ["warn", "☁ offline"], login: ["warn", "☁ accedi"], err: ["bad", "☁ errore"] };
+  const map = { off: ["", "☁ non collegato"], ok: ["ok", "☁ sincronizzato"], busy: ["", "☁ sincronizzazione…"], offline: ["warn", "☁ offline"], login: ["warn", "☁ accesso richiesto"], err: ["bad", "☁ errore"] };
   const m = map[s.st] || map.off; b.className = "badge " + m[0]; b.innerHTML = `<span class="bt">${esc(m[1])}</span>`; b.setAttribute("aria-label", m[1]); b.title = s.msg || m[1];
 }
 
-function needsData() { return `<div class="card"><h2>Benvenuto</h2><p>Per iniziare carica i dati dell'orario (il file <b>dati_orario.json</b> che ti ho consegnato).</p><button class="b pri" data-act="goto" data-tab="impostazioni">Vai a Impostazioni → Importa dati</button></div>`; }
+function needsData() { return `<div class="card"><h2>Benvenuto</h2><p>Per iniziare, caricare i dati dell'orario (il file <b>dati_orario.json</b>).</p><button class="b pri" data-act="goto" data-tab="impostazioni">Andare in Impostazioni → Importare i dati</button></div>`; }
 
 /* ---- OGGI ---- */
 function vOggi() {
@@ -530,13 +578,15 @@ function vOggi() {
   const dt = new Date(d + "T12:00:00"), wd = dt.toLocaleDateString("it-IT", { weekday: "long" }), dm = dt.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
   const assenti = [...new Set(day.map(s => s.assente))].sort();
   let h = "";
+  const evs = eventiDelGiorno(d);
+  if (evs.length) h += `<div class="card"><h3>Promemoria</h3>${evs.map(e => `<div class="sub"><div class="h">${esc(e.ora || "")}</div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div></div>`).join("")}</div>`;
   h += recAlert() + pendAlert() + calBox(d);
   const cn = closedOn(d);
   const multi = E.activeAbs(state).filter(a => a.al && a.al !== a.dal && d >= a.dal && d <= a.al);
   if (multi.length) h += `<div class="card">${multi.map(a => { const days = E.datesBetween(a.dal, a.al).filter(x => !closedOn(x)); return `<div class="mp"><b>${esc(nice(a.docente))}</b> · assente dal ${esc(fmtDate(a.dal))} al ${esc(fmtDate(a.al))}<div class="chips" style="margin-top:6px">${days.map(x => `<span class="chip sm ${x === d ? "on" : ""}" data-act="gotoday" data-date="${x}">${esc(fmtDate(x))}</span>`).join("")}</div></div>`; }).join("")}</div>`;
   if (cn) h += `<div class="card empty"><b>${esc(cn)}</b>${wk ? "Scuola chiusa: nessuna lezione e nessuna sostituzione da fare." : "Nel fine settimana non ci sono lezioni."}</div>`;
-  else if (!day.length) h += `<div class="card empty"><b>Nessuna assenza</b>Per questa data non c'è niente da coprire. Tocca «Nuova assenza» per registrarne una.</div>`;
-  if (unc) h += `<div class="note bad"><b>${unc} ${unc === 1 ? "ora" : "ore"} senza sostituto.</b> Tocca «Cambia» sulle righe rosse per sceglierlo a mano.</div>`;
+  else if (!day.length) h += `<div class="card empty"><b>Nessuna assenza</b>Per questa data non c'è niente da coprire. Per registrare un'assenza usare «+ Assenza».</div>`;
+  if (unc) h += `<div class="note bad"><b>${unc} ${unc === 1 ? "ora" : "ore"} senza sostituto.</b> Per sceglierlo a mano, usare «Cambiare» sulle righe rosse.</div>`;
   for (let n = 1; n <= 7; n++) {
     const rows = day.filter(s => s.ora === n).sort((a, b) => a.classe.localeCompare(b.classe)); if (!rows.length) continue;
     h += `<div class="hour"><div class="ruler"><b>${n}ª</b><small>${esc(oraLabel(n).replace("–", "–​"))}</small></div><div class="slots">`;
@@ -545,12 +595,10 @@ function vOggi() {
       const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo)}` : s.nosub ? `<span class="mut">Non sostituita</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
       h += `<div class="slot ${open ? "open" : ""}"><div class="cls ${none ? "na" : s.classe.length > 3 ? "sm" : ""}">${none ? "IRC" : esc(s.classe)}</div>
       <div class="who"><div class="l1">${who}</div><div class="l2">${esc(nice(s.materia))}, ${esc(nice(s.assente))} assente</div></div>
-      <div class="act">${s.sostituto ? `<label class="chk"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}>sul registro</label>` : ""}<button class="b sm" data-act="editsub" data-id="${s.id}">Cambia</button></div></div>`;
+      <div class="act">${s.sostituto ? `<label class="chk"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}>sul registro</label>` : ""}<button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div></div>`;
     }
     h += `</div></div>`;
   }
-  const evs = eventiDelGiorno(d);
-  if (evs.length) h += `<div class="card"><h3>Promemoria</h3>${evs.map(e => `<div class="sub"><div class="h">${esc(e.ora || "")}</div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div></div>`).join("")}</div>`;
   return h;
 }
 
@@ -579,14 +627,14 @@ async function calLoad(date, force) {
 function calBox(date) {
   if (!calCfg()) return "";
   const hit = calCache[date];
-  let h = `<div class="card"><h3>Calendario della scuola</h3>`;
-  if (!hit) h += `<p class="mut">${calFail[date] ? "Non riesco a leggere il calendario (" + esc(ui.calErr || "errore") + ")." : "Carico gli eventi…"}</p>`;
+  let h = `<div class="card"><h3>Attività e impegni dei docenti del plesso</h3>`;
+  if (!hit) h += `<p class="mut">${calFail[date] ? "Calendario non leggibile (" + esc(ui.calErr || "errore") + ")." : "Caricamento degli eventi…"}</p>`;
   else {
     const ev = hit.ev.slice().sort((a, b) => (a.ci || 0) - (b.ci || 0) || (a.all ? 0 : 1) - (b.all ? 0 : 1) || (a.st || "").localeCompare(b.st || ""));
     const row = x => `<div class="ev"><span class="evt">${x.all ? "Tutto il giorno" : esc(x.st || "") + (x.et ? "–" + esc(x.et) : "")}</span><div><b>${esc(x.t || "(senza titolo)")}</b>${x.l ? `<small>${esc(x.l)}</small>` : ""}${x.d ? `<small>${esc(x.d)}</small>` : ""}</div></div>`;
     if (!ev.length) h += '<p class="mut">Nessun evento in calendario.</p>';
     else { let last = null; ev.forEach(x => { const lab = TITOLI_CAL[x.ci] || x.c || ""; if (lab && lab !== last) { h += `<div class="grp">${esc(lab)}</div>`; last = lab; } h += row(x); }); }
-    if (calFail[date]) h += `<p class="mut">Calendario non raggiungibile: mostro i dati salvati alle ${new Date(hit.at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}.</p>`;
+    if (calFail[date]) h += `<p class="mut">Calendario non raggiungibile: dati salvati alle ${new Date(hit.at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}.</p>`;
   }
   return h + "</div>";
 }
@@ -619,14 +667,14 @@ function pendAlert() {
   const by = {}; subs().filter(s => s.pending && !s.sostituto && s.auto !== false).forEach(s => (by[s.assenzaId] = by[s.assenzaId] || []).push(s));
   const as = Object.keys(by).map(id => state.assenze.find(x => x.id === id && !x.del)).filter(Boolean).sort((a, b) => a.dal.localeCompare(b.dal));
   if (!as.length) return "";
-  return `<div class="note"><b>Sostituzioni da definire</b>${as.map(a => { const n = by[a.id].length; return `<div class="pr"><span>${esc(nice(a.docente))} · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""} · ${n} ${n === 1 ? "ora" : "ore"}</span><button class="b sm" data-act="defsub" data-id="${a.id}">Definisci</button></div>`; }).join("")}</div>`;
+  return `<div class="note"><b>Sostituzioni da definire</b>${as.map(a => { const n = by[a.id].length; return `<div class="pr"><span>${esc(nice(a.docente))} · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""} · ${n} ${n === 1 ? "ora" : "ore"}</span><button class="b sm" data-act="defsub" data-id="${a.id}">Definire</button></div>`; }).join("")}</div>`;
 }
 function recAlert() {
   const open = permessiStato().filter(i => i.res > 0), late = open.filter(i => i.days < 0), soon = open.filter(i => i.days >= 0 && i.days <= 30);
   if (!late.length && !soon.length) return "";
   const h = late.reduce((n, i) => n + i.res, 0), hs = soon.reduce((n, i) => n + i.res, 0);
   const msg = (late.length ? `<b>${h} ${h === 1 ? "ora" : "ore"} da recuperare scadute</b>` : "") + (late.length && soon.length ? " · " : "") + (soon.length ? `<b>${hs} ${hs === 1 ? "ora" : "ore"} in scadenza</b> (entro 30 giorni)` : "");
-  return `<div class="note ${late.length ? "bad" : ""}">${msg}. <button class="link" data-act="gotorec">Apri il registro</button></div>`;
+  return `<div class="note ${late.length ? "bad" : ""}">${msg}. <button class="link" data-act="gotorec">Aprire il report</button></div>`;
 }
 function recItems() { const items = permessiStato(); return { open: items.filter(i => i.res > 0).sort((a, b) => a.scad.localeCompare(b.scad)), done: items.filter(i => i.res === 0).reverse() }; }
 const recWhen = i => i.days < 0 ? `<span class="uncov">scaduto da ${-i.days} ${-i.days === 1 ? "giorno" : "giorni"}</span>` : i.days === 0 ? '<span class="uncov">scade oggi</span>' : i.days <= 30 ? `<span style="color:var(--warn);font-weight:700">scade tra ${i.days} ${i.days === 1 ? "giorno" : "giorni"}</span>` : `scade tra ${i.days} giorni`;
@@ -634,27 +682,35 @@ const recWhen = i => i.days < 0 ? `<span class="uncov">scaduto da ${-i.days} ${-
 function vRecuperi() {
   const { open, done } = recItems(), tot = open.reduce((n, i) => n + i.res, 0);
   const row = i => `<div class="rec"><div class="m"><b>${esc(nice(i.p.docente))}</b> · permesso del ${esc(fmtDate(i.p.data))}<div class="mut">${i.p.ore} ${i.p.ore === 1 ? "ora" : "ore"} · recuperate ${i.p.ore - i.res} · <b>residue ${i.res}</b> · entro ${esc(fmtDate(i.scad))} · ${i.res ? recWhen(i) : "completato"}</div></div></div>`;
-  return `<div class="card"><h3>Ore da recuperare — resoconto</h3>${open.length ? `<p class="mut" style="margin:0 0 6px">${tot} ${tot === 1 ? "ora residua" : "ore residue"} · per modificarle vai in «Assenze».</p>${open.map(row).join("")}` : '<div class="ok-note">Nessuna ora da recuperare.</div>'}${done.length ? `<details style="margin-top:8px"><summary>Già recuperate (${done.length})</summary>${done.map(row).join("")}</details>` : ""}</div>`;
+  return `<div class="card"><h3>Report ore da recuperare</h3>${open.length ? `<p class="mut" style="margin:0 0 6px">${tot} ${tot === 1 ? "ora residua" : "ore residue"} · per modificarle andare in «Assenze».</p>${open.map(row).join("")}` : '<div class="ok-note">Nessuna ora da recuperare.</div>'}${done.length ? `<details style="margin-top:8px"><summary>Già recuperate (${done.length})</summary>${done.map(row).join("")}</details>` : ""}</div>`;
 }
-/* Assenze: gestione (−1, +1, togli) con pulsanti piccoli */
+/* Assenze: un'unica tabella «Ore da recuperare», una riga per docente */
+function recRows() {
+  const items = permessiStato(), names = new Set(state.recuperi.filter(r => !r.del && (r.ore || 0) > 0).map(r => r.id));
+  items.filter(i => i.res > 0).forEach(i => names.add(i.p.docente));
+  return [...names].sort().map(k => {
+    const r = state.recuperi.find(x => x.id === k && !x.del), ore = r ? r.ore : 0, usate = usedRecuperi(k);
+    const mine = items.filter(i => i.p.docente === k), open = mine.filter(i => i.res > 0).sort((x, y) => x.scad.localeCompare(y.scad));
+    return { k, ore, usate, res: Math.max(0, ore - usate), next: open[0] || null, man: mine.some(i => i.man > 0) };
+  });
+}
 function vRecGest() {
-  const { open, done } = recItems();
-  const row = i => `<div class="rec"><div class="m"><b>${esc(nice(i.p.docente))}</b> · permesso del ${esc(fmtDate(i.p.data))}<div class="mut">${i.p.ore} ${i.p.ore === 1 ? "ora" : "ore"} · recuperate ${i.p.ore - i.res} · <b>residue ${i.res}</b> · entro ${esc(fmtDate(i.scad))} · ${i.res ? recWhen(i) : "completato"}</div></div><div class="recbtns"><button class="b sm" data-act="recman" data-id="${i.p.id}" data-d="-1" aria-label="Annulla un'ora recuperata" ${i.man ? "" : "disabled"}>−1</button><button class="b sm pri" data-act="recman" data-id="${i.p.id}" data-d="1" aria-label="Un'ora recuperata" ${i.res ? "" : "disabled"}>+1</button><button class="b sm bad" data-act="recdelperm" data-id="${i.p.id}" aria-label="Togli dal registro">✕</button></div></div>`;
-  return `<div class="card"><h2>Ore da recuperare</h2><p class="mut">Permessi brevi: le ore vanno recuperate entro 2 mesi. Scendono da sole quando il docente fa una sostituzione come «recupero»; usa «+1» se ha recuperato in altro modo.</p>${open.length ? open.map(row).join("") : '<div class="ok-note">Nessuna ora da recuperare.</div>'}${done.length ? `<details style="margin-top:8px"><summary>Già recuperate (${done.length})</summary>${done.map(row).join("")}</details>` : ""}</div>${vRecGestione()}`;
-}
-
-function vRecGestione() {
   if (!state.orario) return "";
-  const rec = state.recuperi.filter(r => !r.del && (r.ore || 0) > 0);
-    return `<div class="card"><h2>Docenti che devono recuperare</h2><p class="mut">Fascia 3 di priorità. Inserisci le ore da recuperare: scendono da sole a ogni sostituzione assegnata come «recupero».</p>
-    ${rec.length ? `<div class="scroll"><table class="t"><tr><th>Docente</th><th>Da recuperare</th><th>Usate</th><th>Residue</th><th></th></tr>${rec.map(r => `<tr><td>${esc(nice(r.id))}</td><td><input type="number" min="0" style="width:64px" value="${r.ore}" data-act="recore" data-id="${esc(r.id)}"></td><td>${usedRecuperi(r.id)}</td><td><b>${Math.max(0, r.ore - usedRecuperi(r.id))}</b></td><td><button class="b sm bad" data-act="recdel" data-id="${esc(r.id)}">✕</button></td></tr>`).join("")}</table></div>` : '<p class="mut">Nessun docente inserito.</p>'}
-    <h3 style="margin-top:14px">Aggiungi ore da recuperare a mano</h3>
-    <label class="f">Docente</label><select id="rec_sel"><option value="">— scegli —</option>${teachers().map(t => `<option value="${esc(t.k)}">${esc(nice(t.k))}</option>`).join("")}</select>
+  const rows = recRows();
+  const row = r => `<div class="rt-row"><div class="c nm"><b>${esc(nice(r.k))}</b></div>
+    <div class="c" data-l="Da recuperare"><input type="number" min="0" value="${r.ore}" data-act="recore" data-id="${esc(r.k)}" aria-label="Ore da recuperare"></div>
+    <div class="c" data-l="Recuperate">${r.usate}</div><div class="c" data-l="Residue"><b>${r.res}</b></div>
+    <div class="c" data-l="Scadenza">${r.next ? esc(fmtDate(r.next.scad)) + "<br><small>" + recWhen(r.next) + "</small>" : "—"}</div>
+    <div class="c ac"><button class="b sm" data-act="recminus" data-k="${esc(r.k)}" aria-label="Annullare un'ora recuperata" ${r.man ? "" : "disabled"}>−1</button><button class="b sm pri" data-act="recplus" data-k="${esc(r.k)}" aria-label="Un'ora recuperata" ${r.res ? "" : "disabled"}>+1</button><button class="b sm bad" data-act="recx" data-k="${esc(r.k)}" aria-label="Togliere il docente dall'elenco">✕</button></div></div>`;
+  return `<div class="card" id="reccard"><h2>Ore da recuperare — docenti che devono recuperare</h2><p class="mut">Le ore diminuiscono quando il docente svolge una sostituzione come «recupero». Usare +1 se l'ora è stata recuperata in altro modo.</p>
+    ${rows.length ? `<div class="rt"><div class="rt-head"><div>Docente</div><div>Da recuperare</div><div>Recuperate</div><div>Residue</div><div>Scadenza</div><div></div></div>${rows.map(row).join("")}</div>` : '<div class="ok-note">Nessuna ora da recuperare.</div>'}
+    <h3 style="margin-top:16px">Aggiungere ore da recuperare a mano</h3>
+    <label class="f">Docente</label><select id="rec_sel"><option value="">— scegliere —</option>${teachers().map(t => `<option value="${esc(t.k)}">${esc(nice(t.k))}</option>`).join("")}</select>
     <div class="row"><div class="grow"><label class="f">Data del permesso (facoltativa)</label><input type="date" id="rec_d"></div><div><label class="f">Ore</label><input type="number" id="rec_n" min="1" value="1" style="width:72px"></div></div>
-    <p class="mut" style="margin:6px 0 0">Con la data le ore entrano nel registro «Ore da recuperare» (scheda Report) con la scadenza a 2 mesi. Senza data contano solo come ore da recuperare.</p>
-    <div class="row" style="margin-top:8px"><button class="b pri" data-act="recadd">Aggiungi</button></div></div>`;
-
+    <p class="mut" style="margin:6px 0 0">Con la data le ore entrano nel «Report ore da recuperare» (scheda Report) con scadenza a 2 mesi. Senza data contano solo come ore da recuperare.</p>
+    <div class="row" style="margin-top:8px"><button class="b pri" data-act="recadd">Aggiungere</button></div></div>`;
 }
+
 /* ---- ASSENZE ---- */
 /* ore in cui il docente è a scuola nei giorni scelti: {ora: etichetta} */
 function oreDocente(f) {
@@ -684,18 +740,18 @@ function oreChips(dr) {
     if (days.length > 1) {
       dr.tutto = true; dr.ore = [];
       const rows = days.map(x => { const n = Object.keys(oreDocente({ ...dr, dal: x })).map(Number).sort((a, b) => a - b); return `<div class="sub"><div class="m"><b>${esc(fmtDate(x))}</b> · ${n.length ? n.map(k => k + "ª").join(" ") + ` <span class="mut">(${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : '<span class="mut">nessuna lezione</span>'}</div></div>`; }).join("");
-      return `<label class="f">Ore</label><div class="note">Assenza di più giorni: vale <b>tutto il giorno</b> per ognuno dei ${days.length} giorni. Le ore da sostituire sono queste:</div>${rows}<p class="mut" style="margin:6px 0 0">Per assentarsi solo alcune ore, lascia vuoto «Al» (un giorno solo).</p>`;
+      return `<label class="f">Ore</label><div class="note">Assenza di più giorni: vale <b>tutto il giorno</b> per ognuno dei ${days.length} giorni. Le ore da sostituire sono queste:</div>${rows}<p class="mut" style="margin:6px 0 0">Per assentarsi solo alcune ore, lasciare vuoto «Al» (un giorno solo).</p>`;
     }
   }
   const hrs = oreDocente(dr), nums = Object.keys(hrs).map(Number).sort((a, b) => a - b);
   let h = '<label class="f">Ore</label>';
-  if (!dr.docente) return h + '<p class="mut" style="margin:0">Scegli prima il docente: vedrai solo le ore in cui è a scuola.</p>';
+  if (!dr.docente) return h + '<p class="mut" style="margin:0">Scegliere prima il docente: compariranno le ore in cui il docente è a scuola.</p>';
   if (!nums.length) return h + '<p class="mut" style="margin:0">In questo giorno il docente non ha lezione.</p>';
   h += `<div class="chips"><span class="chip ${dr.tutto ? "on" : ""}" data-act="tutto"><b>Tutto</b><small>il giorno</small></span>`;
   h += nums.map(n => `<span class="chip ${!dr.tutto && dr.ore.includes(n) ? "on" : ""}" data-act="orachip" data-n="${n}"><b>${n}ª</b><small>${esc(hrs[n])}</small></span>`).join("");
   h += "</div>";
   const ov = permessoCalc(dr).find(p => p.eccesso > 0);
-  if (ov) h += `<div class="note bad">Permesso breve: massimo <b>${ov.max} ${ov.max === 1 ? "ora" : "ore"}</b> su ${ov.tot} (alternativa esclusa). Togli ${ov.eccesso} ${ov.eccesso === 1 ? "ora" : "ore"} per continuare.</div>`;
+  if (ov) h += `<div class="note bad">Permesso breve: massimo <b>${ov.max} ${ov.max === 1 ? "ora" : "ore"}</b> su ${ov.tot} (alternativa esclusa). Occorre togliere ${ov.eccesso} ${ov.eccesso === 1 ? "ora" : "ore"} per continuare.</div>`;
   return h;
 }
 function normMotivo(dr) { const ok = dr.tutto ? MOTIVI.filter(m => m !== "Permesso breve") : ["Permesso breve"]; if (!ok.includes(dr.motivo)) dr.motivo = ok[0]; return ok; }
@@ -711,29 +767,29 @@ function vAssenze() {
   if (!state.orario) return needsData();
   const dr = ui.form || (ui.form = { docente: "", dal: ui.date, al: "", tutto: true, ore: [], motivo: "Malattia", nota: "", promemoria: true });
   let h = `<div class="card"><h2>Nuova assenza</h2>
-  <label class="f">Docente</label><select id="f_doc" data-act="formchg"><option value="">— scegli —</option>${teachers().map(t => `<option value="${esc(t.k)}" ${dr.docente === t.k ? "selected" : ""}>${esc(nice(t.k))} — ${esc(t.materie.join("/").toLowerCase())}</option>`).join("")}</select>
+  <label class="f">Docente</label><select id="f_doc" data-act="formchg"><option value="">— scegliere —</option>${teachers().map(t => `<option value="${esc(t.k)}" ${dr.docente === t.k ? "selected" : ""}>${esc(nice(t.k))} — ${esc(t.materie.join("/").toLowerCase())}</option>`).join("")}</select>
   <div class="row"><div class="grow"><label class="f">Dal</label><input type="date" id="f_dal" data-act="formchg" value="${dr.dal}"></div><div class="grow"><label class="f">Al (facoltativo)</label><input type="date" id="f_al" data-act="formchg" value="${dr.al}"></div></div>
   <div id="chiusibox">${chiusiBox(dr)}</div><div id="orebox">${oreChips(dr)}</div><div id="motbox">${motBox(dr)}</div>
   <label class="f">Nota (facoltativa)</label><input id="f_nota" value="${esc(dr.nota)}">
-  <label style="display:block;margin:10px 0"><input type="checkbox" id="f_prom" ${dr.promemoria ? "checked" : ""}> Crea un promemoria per quel giorno</label>
-  <div class="row"><button class="b pri" data-act="calc">Calcola sostituzioni</button><button class="b" data-act="calclater">Salva solo l'assenza</button></div><p class="mut" style="margin:8px 0 0">«Salva solo l'assenza» lascia le sostituzioni da definire dopo: te le ricorda nella schermata Oggi.</p></div>`;
+  <label style="display:block;margin:10px 0"><input type="checkbox" id="f_prom" ${dr.promemoria ? "checked" : ""}> Creare un promemoria per quel giorno</label>
+  <div class="row"><button class="b pri" data-act="calc">Calcolare le sostituzioni</button><button class="b" data-act="calclater">Salvare solo l'assenza</button></div><p class="mut" style="margin:8px 0 0">«Salvare solo l'assenza» lascia le sostituzioni da definire: vedere la schermata Oggi.</p></div>`;
   if (ui.sostAsk) h += vSostAsk();
   if (ui.draft) h += vDraft();
   const abs = E.activeAbs(state).sort((a, b) => b.dal.localeCompare(a.dal)).slice(0, 40);
   h += `<div class="card"><h3>Assenze registrate</h3>${abs.length ? abs.map(a => {
     const n = subs().filter(s => s.assenzaId === a.id).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora), u = n.filter(s => s.auto !== false && !s.sostituto), pend = u.some(s => s.pending);
-    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.filter(s => s.sostituto).length} sostituzioni${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definisci" : "Riproponi"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Apri</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
-    ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · correggi</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo) : s.nosub ? "Non sostituita" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambia</button></div>`).join("")}</details>` : ""}</div>`;
+    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.filter(s => s.sostituto).length} sostituzioni${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definisci" : "Riproponi"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
+    ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · correggi</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo) : s.nosub ? "Non sostituita" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</details>` : ""}</div>`;
   }).join("") : '<span class="mut">Nessuna assenza.</span>'}</div>`;
   h += vRecGest();
   return h;
 }
 function vDraft() {
   const dd = ui.draft, rows = dd.rows;
-  if (!rows.length) return `<div class="card"><div class="note">Il docente non ha ore di lezione in quel periodo: nessuna sostituzione necessaria.</div><button class="b pri" data-act="savedraft">Salva comunque l'assenza</button> <button class="b" data-act="canceldraft">Annulla</button></div>`;
+  if (!rows.length) return `<div class="card"><div class="note">Il docente non ha ore di lezione in quel periodo: nessuna sostituzione necessaria.</div><button class="b pri" data-act="savedraft">Salvare comunque l'assenza</button> <button class="b" data-act="canceldraft">Annullare</button></div>`;
   const unc = rows.filter(r => r.auto && !r.sostituto).length, nNo = rows.filter(r => r.nosub).length;
-  let h = `<div class="card" id="draftcard"><h2>${dd.existing ? "Definisci le sostituzioni" : "Proposta di sostituzione"}</h2><p class="mut">${esc(nice(dd.assenza.docente))} · ${rows.length - nNo} ${rows.length - nNo === 1 ? "ora" : "ore"} da coprire. Tocca il sostituto che preferisci per ogni ora, poi salva.</p>${unc ? `<div class="note">${unc} ${unc === 1 ? "ora" : "ore"} senza candidati nelle quattro fasce: scegli un docente a mano o salva come scoperta.</div>` : '<div class="ok-note">Tutte le ore hanno un sostituto proposto.</div>'}`;
-  if (dd.permessi && dd.permessi.length) h += dd.permessi.map(p => `<div class="note ${p.eccesso || !p.rec ? "bad" : ""}"><b>${esc(fmtDate(p.data))}</b>: permesso breve, massimo ${p.max} ${p.max === 1 ? "ora" : "ore"} su ${p.tot} (alternativa esclusa). ${p.rec ? `<b>${p.rec} ${p.rec === 1 ? "ora" : "ore"} da recuperare</b> entro il ${esc(fmtDateLong(addMonths(p.data, 2)))}.` : "Nessuna ora recuperabile."}${p.eccesso ? ` Hai scelto ${p.count} ore: ${p.eccesso === 1 ? "1 ora oltre la metà non rientra" : p.eccesso + " ore oltre la metà non rientrano"} nel permesso breve.` : ""}</div>`).join("");
+  let h = `<div class="card" id="draftcard"><h2>${dd.existing ? "Definisci le sostituzioni" : "Proposta di sostituzione"}</h2><p class="mut">${esc(nice(dd.assenza.docente))} · ${rows.length - nNo} ${rows.length - nNo === 1 ? "ora" : "ore"} da coprire. Toccare il sostituto preferito per ogni ora, poi salvare.</p>${unc ? `<div class="note">${unc} ${unc === 1 ? "ora" : "ore"} senza candidati nelle quattro fasce: scegliere un docente a mano o salvare come scoperta.</div>` : '<div class="ok-note">Tutte le ore hanno un sostituto proposto.</div>'}`;
+  if (dd.permessi && dd.permessi.length) h += dd.permessi.map(p => `<div class="note ${p.eccesso || !p.rec ? "bad" : ""}"><b>${esc(fmtDate(p.data))}</b>: permesso breve, massimo ${p.max} ${p.max === 1 ? "ora" : "ore"} su ${p.tot} (alternativa esclusa). ${p.rec ? `<b>${p.rec} ${p.rec === 1 ? "ora" : "ore"} da recuperare</b> entro il ${esc(fmtDateLong(addMonths(p.data, 2)))}.` : "Nessuna ora recuperabile."}${p.eccesso ? ` Scelte ${p.count} ore: ${p.eccesso === 1 ? "1 ora oltre la metà non rientra" : p.eccesso + " ore oltre la metà non rientrano"} nel permesso breve.` : ""}</div>`).join("");
   if (nNo) h += `<div class="ok-note">${nNo} ${nNo === 1 ? "ora di sostegno resta" : "ore di sostegno restano"} senza sostituzione: l'assenza viene comunque registrata.</div>`;
   let last = "";
   rows.forEach((r, i) => {
@@ -743,7 +799,7 @@ function vDraft() {
     h += `<div class="sub"><div class="h">${r.ora}ª<small>${esc(oraLabel(r.ora))}</small></div><div class="m"><div>${r.classe !== "—" ? "Classe <b>" + esc(r.classe) + "</b> · " : ""}${esc(nice(r.materia))}</div>
     ${optList({ date: r.data, ora: r.ora, classi: r.classi, materia: r.materia, tipo: r.tipo, docenteAssente: dd.assenza.docente }, others, r.sostituto, "draftpick", i)}</div></div>`;
   });
-  h += `<div class="row" style="margin-top:12px"><button class="b pri" data-act="savedraft">Conferma e salva</button>${dd.existing ? "" : '<button class="b" data-act="savelater">Salva, sostituzioni dopo</button>'}<button class="b" data-act="canceldraft">Annulla</button></div></div>`;
+  h += `<div class="row" style="margin-top:12px"><button class="b pri" data-act="savedraft">Confermare e salvare</button>${dd.existing ? "" : '<button class="b" data-act="savelater">Salvare, sostituzioni dopo</button>'}<button class="b" data-act="canceldraft">Annullare</button></div></div>`;
   return h;
 }
 
@@ -773,11 +829,11 @@ function vRegistro() {
   if (!state.orario) return needsData();
   const { label, rows } = regRows(), subbed = rows.filter(s => s.sostituto), ab = regAbs();
   const tr = rows.filter(s => s.firmata).length;
-  let h = vRecuperi() + `<div class="card"><h2>Report sostituzioni</h2><div class="row"><select data-act="regmode">${["giorno", "settimana", "mese", "mesi"].map(m => `<option value="${m}" ${ui.regMode === m ? "selected" : ""}>${m === "mesi" ? "più mesi" : m}</option>`).join("")}</select>${ui.regMode === "mesi" ? "" : `<input type="date" value="${ui.regDate}" data-act="regdate">`}<button class="b" data-act="xlsx">Esporta Excel</button></div>
+  let h = vRecuperi() + `<div class="card"><h2>Report sostituzioni</h2><div class="row"><select data-act="regmode">${["giorno", "settimana", "mese", "mesi"].map(m => `<option value="${m}" ${ui.regMode === m ? "selected" : ""}>${m === "mesi" ? "più mesi" : m}</option>`).join("")}</select>${ui.regMode === "mesi" ? "" : `<input type="date" value="${ui.regDate}" data-act="regdate">`}<button class="b" data-act="xlsx">Esportare in Excel</button></div>
   ${ui.regMode === "mesi" ? `<div class="chips" style="margin-top:10px">${annoScolasticoMesi().map(k => `<span class="chip ${(ui.regMonths || []).includes(k) ? "on" : ""}" data-act="regmonth" data-k="${k}"><b>${MESI[+k.slice(5) - 1]}</b><small>${k.slice(0, 4)}</small></span>`).join("")}</div><div class="row" style="margin-top:8px"><button class="b sm" data-act="regmonthsall">Tutti</button><button class="b sm" data-act="regmonthsnone">Nessuno</button></div>` : ""}</div>`;
   h += `<div class="card"><h3>Assenze nel periodo (${ab.length})</h3>${ab.length ? ab.map(x => { const st = absStat(x); return `<div class="sub"><div class="m"><b>${esc(nice(x.docente))}</b> · ${esc(fmtDate(x.dal))}${x.al && x.al !== x.dal ? " → " + esc(fmtDate(x.al)) : ""}<div class="mut">${x.ore === "tutto" ? "tutto il giorno" : "ore " + x.ore.join(", ")} · ${esc(x.motivo || "")} · ${st.tot ? `${st.sost} ${st.sost === 1 ? "ora sostituita" : "ore sostituite"}${st.tot - st.sost ? `, ${st.tot - st.sost} non sostituite` : ""}` : "nessuna ora da coprire"}</div></div></div>`; }).join("") : '<p class="mut">Nessuna assenza nel periodo.</p>'}</div>`;
   h += `<div class="card"><h3>${esc(label)} — ${rows.length} ${rows.length === 1 ? "ora di assenza" : "ore di assenza"}${rows.length ? `, ${subbed.length} sostituite, ${tr} già sul registro` : ""}</h3>
-  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spunta «Sul registro» quando hai segnato l'ora sul registro cartaceo.</p>${rows.map((s, i) => (i && rows[i - 1].data === s.data ? "" : `<div class="dayh">${esc(fmtDate(s.data))}</div>`) + `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
+  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spuntare «Sul registro» quando l'ora è stata segnata sul registro cartaceo.</p>${rows.map((s, i) => (i && rows[i - 1].data === s.data ? "" : `<div class="dayh">${esc(fmtDate(s.data))}</div>`) + `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
   const tot = {}; subbed.forEach(s => { const t = tot[s.sostituto] = tot[s.sostituto] || { n: 0, 1: 0, 2: 0, 3: 0, 4: 0, 0: 0 }; t.n++; t[s.tier || 0]++; });
   const names = Object.keys(tot).sort();
   if (names.length) h += `<div class="card"><h3>Riepilogo per docente</h3><div class="scroll"><table class="t"><thead><tr><th>Docente</th><th>Totale</th><th>A disp./alt.</th><th>Sostegno</th><th>Recupero</th><th>Eccedenti</th><th>Altro</th></tr></thead><tbody>${names.map(n => `<tr><td>${esc(nice(n))}</td><td>${tot[n].n}</td><td>${tot[n][1] || ""}</td><td>${tot[n][2] || ""}</td><td>${tot[n][3] || ""}</td><td>${tot[n][4] || ""}</td><td>${tot[n][0] || ""}</td></tr>`).join("")}</tbody></table></div></div>`;
@@ -854,10 +910,10 @@ function vPromemoria() {
   return `<div class="card"><h2>Nuovo promemoria</h2><label class="f">Titolo</label><input id="e_tit" value="${esc(f.titolo)}" placeholder="es. Collegio docenti">
   <div class="row"><div class="grow"><label class="f">Data</label><input type="date" id="e_data" value="${f.data}"></div><div class="grow"><label class="f">Ora</label><input type="time" id="e_ora" value="${f.ora}"></div></div>
   <label class="f">Ripetizione</label><select id="e_rip"><option value="">una volta</option><option value="settimanale" ${f.ripeti ? "selected" : ""}>ogni settimana</option></select>
-  <label class="f">Nota</label><input id="e_nota" value="${esc(f.nota)}"><div class="row" style="margin-top:10px"><button class="b pri" data-act="addev">Aggiungi</button></div></div>
-  <div class="card"><h3>Prossimi promemoria</h3>${list.length ? list.map(({ e, d }) => `<div class="sub"><div class="h">${esc(fmtDate(d))}<small>${esc(e.ora || "")}${e.ripeti ? " · settim." : ""}</small></div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div><button class="b sm bad" data-act="delev" data-id="${e.id}">Elimina</button></div>`).join("") : '<span class="mut">Nessun promemoria nei prossimi 45 giorni.</span>'}</div>
-  <div class="card"><h3>Avvisi</h3><p class="mut">I promemoria compaiono nella scheda «Oggi» il giorno stabilito. Con l'app aperta puoi ricevere anche un avviso a schermo. Una pagina web chiusa non può mandare notifiche al telefono.</p>
-  <div class="row"><label>Preavviso (min) <input type="number" min="0" max="240" id="e_pre" value="${state.settings.preavviso}" style="width:80px"></label>${perm === "default" ? '<button class="b" data-act="notif">Attiva avvisi ad app aperta</button>' : `<span class="mut">Avvisi: ${perm === "granted" ? "attivi" : perm === "denied" ? "bloccati dal browser" : "non supportati"}</span>`}</div></div>`;
+  <label class="f">Nota</label><input id="e_nota" value="${esc(f.nota)}"><div class="row" style="margin-top:10px"><button class="b pri" data-act="addev">Aggiungere</button></div></div>
+  <div class="card"><h3>Prossimi promemoria</h3>${list.length ? list.map(({ e, d }) => `<div class="sub"><div class="h">${esc(fmtDate(d))}<small>${esc(e.ora || "")}${e.ripeti ? " · settim." : ""}</small></div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div><button class="b sm bad" data-act="delev" data-id="${e.id}">Eliminare</button></div>`).join("") : '<span class="mut">Nessun promemoria nei prossimi 45 giorni.</span>'}</div>
+  <div class="card"><h3>Avvisi</h3><p class="mut">I promemoria compaiono nella scheda «Oggi» il giorno stabilito. Con l'app aperta è possibile ricevere anche un avviso a schermo. Una pagina web chiusa non può mandare notifiche al telefono.</p>
+  <div class="row"><label>Preavviso (min) <input type="number" min="0" max="240" id="e_pre" value="${state.settings.preavviso}" style="width:80px"></label>${perm === "default" ? '<button class="b" data-act="notif">Attivare gli avvisi ad app aperta</button>' : `<span class="mut">Avvisi: ${perm === "granted" ? "attivi" : perm === "denied" ? "bloccati dal browser" : "non supportati"}</span>`}</div></div>`;
 }
 function checkNotifiche() {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
@@ -870,31 +926,31 @@ function checkNotifiche() {
 function vImpostazioni() {
   const S = state.settings, o = state.orario;
   let h = `<div class="card"><h2>Dati dell'orario</h2>${o ? `<div class="ok-note">Orario caricato: ${teachers().length} docenti, ${Object.keys(o.classi).length} classi.</div>` : '<div class="note">Nessun orario caricato.</div>'}
-  <p class="mut">Importa il file <b>dati_orario.json</b> (una volta sola: poi si sincronizza con OneDrive). I nomi dei docenti restano nel tuo dispositivo e nel tuo OneDrive, non nel codice dell'app.</p>
-  <div class="row"><label class="b pri" style="margin:0">Importa dati orario<input type="file" accept=".json" data-act="importdati" hidden></label><button class="b" data-act="backup">Scarica backup</button><label class="b" style="margin:0">Ripristina backup<input type="file" accept=".json" data-act="importbackup" hidden></label></div></div>`;
+  <p class="mut">Importare il file <b>dati_orario.json</b> (una volta sola: poi si sincronizza con OneDrive). I nomi dei docenti restano nel dispositivo e in OneDrive, non nel codice dell'app.</p>
+  <div class="row"><label class="b pri" style="margin:0">Importare dati orario<input type="file" accept=".json" data-act="importdati" hidden></label><button class="b" data-act="backup">Scaricare backup</button><label class="b" style="margin:0">Ripristinare backup<input type="file" accept=".json" data-act="importbackup" hidden></label></div></div>`;
   h += `<div class="card"><h2>OneDrive</h2>${vSyncBox()}</div>`;
   const tema = themePref();
   h += `<div class="card"><h2>Aspetto</h2><p class="mut">Vale solo per questo dispositivo.</p><div class="chips">${[["", "Automatico"], ["light", "Chiaro"], ["dark", "Scuro"]].map(([v, l]) => `<span class="chip ${tema === v ? "on" : ""}" data-act="tema" data-v="${v}">${l}</span>`).join("")}</div></div>`;
   const cc = S.cal || {};
-  h += `<details class="card"><summary>Calendario della scuola (sola lettura)</summary><p class="mut">Mostra gli eventi del giorno nella schermata Oggi. Serve l'indirizzo dello script Google (vedi la guida) e la parola segreta che hai scelto.</p>
+  h += `<details class="card"><summary>Attività e impegni dei docenti del plesso (sola lettura)</summary><p class="mut">Mostra gli eventi del giorno nella schermata Oggi. Servono l'indirizzo dello script Google (vedere la guida) e la parola segreta scelta.</p>
   <label class="f">Indirizzo dello script</label><input data-act="calurl" value="${esc(cc.url || "")}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off" autocomplete="off">
   <label class="f">Parola segreta</label><input data-act="calk" value="${esc(cc.k || "")}" autocapitalize="off" autocomplete="off">
-  <div class="row" style="margin-top:10px"><button class="b" data-act="caltest">Prova ora</button></div></details>`;
+  <div class="row" style="margin-top:10px"><button class="b" data-act="caltest">Provare ora</button></div></details>`;
   const an = S.anno || {}, ch = (S.chiusure || []).filter(c => !c.del).sort((x, y) => x.dal.localeCompare(y.dal));
-  h += `<details class="card"><summary>Calendario scolastico: festivi e chiusure (${ch.length})</summary><p class="mut">Nei giorni elencati qui l'app non propone sostituzioni e non conta le ore. Sabato e domenica sono sempre esclusi. Il calendario del Veneto 2026/27 è precaricato: controllalo e aggiungi il santo patrono e i giorni di sospensione scelti dalla scuola.</p>
+  h += `<details class="card"><summary>Calendario scolastico: festivi e chiusure (${ch.length})</summary><p class="mut">Nei giorni elencati qui l'app non propone sostituzioni e non conta le ore. Sabato e domenica sono sempre esclusi. Il calendario del Veneto 2026/27 è precaricato: da controllare, con l'aggiunta del santo patrono e dei giorni di sospensione scelti dalla scuola.</p>
   <div class="row"><div class="grow"><label class="f">Inizio lezioni</label><input type="date" data-act="annoi" value="${esc(an.inizio || "")}"></div><div class="grow"><label class="f">Fine lezioni</label><input type="date" data-act="annof" value="${esc(an.fine || "")}"></div></div>
   <div class="scroll"><table class="t"><tr><th>Dal</th><th>Al</th><th>Motivo</th><th></th></tr>${ch.map(c => `<tr><td>${esc(fmtDate(c.dal))}</td><td>${c.al && c.al !== c.dal ? esc(fmtDate(c.al)) : "—"}</td><td>${esc(c.nota || "")}</td><td><button class="b sm" data-act="chiudel" data-id="${c.id}">✕</button></td></tr>`).join("") || '<tr><td colspan="4" class="mut">Nessuna chiusura.</td></tr>'}</table></div>
-  <h3 style="margin-top:12px">Aggiungi una chiusura</h3>
+  <h3 style="margin-top:12px">Aggiungere una chiusura</h3>
   <div class="row"><div class="grow"><label class="f">Dal</label><input type="date" id="ch_dal"></div><div class="grow"><label class="f">Al (se più giorni)</label><input type="date" id="ch_al"></div></div>
   <label class="f">Motivo</label><input id="ch_nota" placeholder="es. Santo patrono">
-  <div class="row" style="margin-top:10px"><button class="b pri" data-act="chiuadd">Aggiungi</button><button class="b" data-act="veneto">Ricarica calendario Veneto 2026/27</button></div></details>`;
-  h += `<details class="card"><summary>Orari delle ore e limiti</summary><div class="grid" style="grid-template-columns:50px 1fr 1fr;margin-top:8px;text-align:left">${S.ore.map((x, i) => `<div style="padding-top:8px">${i + 1}ª</div><input type="time" value="${x[0]}" data-act="oratime" data-i="${i}" data-k="0"><input type="time" value="${x[1]}" data-act="oratime" data-i="${i}" data-k="1">`).join("")}</div>
+  <div class="row" style="margin-top:10px"><button class="b pri" data-act="chiuadd">Aggiungere</button><button class="b" data-act="veneto">Ricaricare il calendario Veneto 2026/27</button></div></details>`;
+  h += `<details class="card"><summary>Durata delle ore e limiti</summary><div class="grid" style="grid-template-columns:50px 1fr 1fr;margin-top:8px;text-align:left">${S.ore.map((x, i) => `<div style="padding-top:8px">${i + 1}ª</div><input type="time" value="${x[0]}" data-act="oratime" data-i="${i}" data-k="0"><input type="time" value="${x[1]}" data-act="oratime" data-i="${i}" data-k="1">`).join("")}</div>
   <div class="row" style="margin-top:10px"><label>Max sostituzioni per docente al giorno <input type="number" min="1" max="7" value="${S.maxPerGiorno}" data-act="maxday" style="width:64px"></label></div>
   <div class="row" style="margin-top:6px"><label>Max per un docente di sostegno al giorno <input type="number" min="0" max="7" value="${S.maxSostegnoGiorno}" data-act="maxsost" style="width:64px"></label></div></details>`;
   if (o) {
     const dis = Object.fromEntries(state.disp.filter(r => !r.del).map(r => [r.id, r]));
-    h += `<details class="card"><summary>Disponibilità ore eccedenti (${Object.keys(dis).length} docenti)</summary><p class="mut">Fascia 4 di priorità, dalla tabella «Disponibilità ad effettuare ore eccedenti». Tocca un docente per modificare le ore indicate. ⚠ = grafia incerta, da verificare.</p>
-    <div class="scroll"><table class="t"><tr><th>Docente</th><th>Disponibile</th><th>Ore indicate</th><th></th></tr>${teachers().map(t => { const a = dis[t.k]; return `<tr><td>${esc(nice(t.k))}</td><td><input type="checkbox" data-act="dispon" data-id="${esc(t.k)}" ${a ? "checked" : ""}></td><td>${a ? (a.slot && a.slot.length ? esc(a.slot.map(s => DAYN[s.slice(0, 3)].slice(0, 3) + " " + s[3] + "ª").join(", ")) : "qualsiasi ora libera") + (a.dv ? " ⚠" : "") : ""}${a && a.nota ? `<div class="mut">${esc(a.nota)}</div>` : ""}</td><td>${a ? `<button class="b sm" data-act="dispedit" data-id="${esc(t.k)}">Modifica</button>` : ""}</td></tr>`; }).join("")}</table></div></details>`;
+    h += `<details class="card"><summary>Disponibilità ore eccedenti (${Object.keys(dis).length} docenti)</summary><p class="mut">Fascia 4 di priorità, dalla tabella «Disponibilità ad effettuare ore eccedenti». Toccando un docente si modificano le ore indicate. ⚠ = grafia incerta, da verificare.</p>
+    <div class="scroll"><table class="t"><tr><th>Docente</th><th>Disponibile</th><th>Ore indicate</th><th></th></tr>${teachers().map(t => { const a = dis[t.k]; return `<tr><td>${esc(nice(t.k))}</td><td><input type="checkbox" data-act="dispon" data-id="${esc(t.k)}" ${a ? "checked" : ""}></td><td>${a ? (a.slot && a.slot.length ? esc(a.slot.map(s => DAYN[s.slice(0, 3)].slice(0, 3) + " " + s[3] + "ª").join(", ")) : "qualsiasi ora libera") + (a.dv ? " ⚠" : "") : ""}${a && a.nota ? `<div class="mut">${esc(a.nota)}</div>` : ""}</td><td>${a ? `<button class="b sm" data-act="dispedit" data-id="${esc(t.k)}">Modificare</button>` : ""}</td></tr>`; }).join("")}</table></div></details>`;
   }
   h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (non anticipano l'ingresso)</li><li>Docenti a disposizione o impegnati nell'alternativa alla religione</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti di sostegno, solo se già nella classe e con moderazione</li><li>Docenti con disponibilità a ore eccedenti</li></ol><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa del docente assente si coprono con gli stessi criteri.</p></div>`;
   return h;
@@ -904,9 +960,9 @@ function vSyncBox() {
   let h = `<label class="f">Client ID (Application ID di Microsoft Entra)</label><input id="cid" value="${esc(cfg.clientId || "")}" placeholder="00000000-0000-0000-0000-000000000000">
   <div class="mut" style="margin-top:4px">Redirect URI da registrare: <code>${esc(redirect)}</code></div>`;
   h += `<div class="row" style="margin-top:10px">`;
-  h += `<button class="b pri" data-act="login">${tok ? "Riaccedi" : "Accedi con Microsoft"}</button>`;
-  if (tok) h += `<button class="b" data-act="syncnow">Sincronizza ora</button><button class="b bad" data-act="logout">Esci</button>`;
-  h += `</div><div class="row" style="margin-top:10px"><button class="b bad" data-act="wipe">Esci e cancella i dati da questo dispositivo</button></div><p class="mut" style="margin-top:6px">Da usare sempre su un computer che non è tuo. I dati restano su OneDrive e li ritrovi riaccedendo.</p><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedi guida): da file locale funziona solo offline." : ""}</p>`;
+  h += `<button class="b pri" data-act="login">${tok ? "Accedere di nuovo" : "Accedere con Microsoft"}</button>`;
+  if (tok) h += `<button class="b" data-act="syncnow">Sincronizzare ora</button><button class="b bad" data-act="logout">Uscire</button>`;
+  h += `</div><div class="row" style="margin-top:10px"><button class="b bad" data-act="wipe">Uscire e cancellare i dati da questo dispositivo</button></div><p class="mut" style="margin-top:6px">Da usare sempre su un computer che non è personale. I dati restano su OneDrive e si ritrovano riaccedendo.</p><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedere la guida): da file locale funziona solo offline." : ""}</p>`;
   return h;
 }
 
@@ -917,7 +973,7 @@ function editSub(id) {
   const others = subs().filter(x => x.id !== id);
   dlg(`<h3 style="margin-top:0">${esc(s.ora)}ª ora · ${esc(s.classe)} · ${esc(nice(s.materia))}</h3><p class="mut">${esc(fmtDateLong(s.data))} — assente: ${esc(nice(s.assente))}</p>
   <input type="hidden" id="es_val" value="${s.sostituto ? esc(s.sostituto + "|" + (s.tier || 0) + "|" + (s.anticipo ? 1 : 0)) : ""}">${optList(needFor(s), others, s.sostituto, "espick")}
-  <div class="row" style="margin-top:14px"><button class="b pri" data-act="essave" data-id="${id}">Salva</button><button class="b" data-act="dlgclose">Annulla</button></div>`);
+  <div class="row" style="margin-top:14px"><button class="b pri" data-act="essave" data-id="${id}">Salvare</button><button class="b" data-act="dlgclose">Annullare</button></div>`);
 }
 function editDisp(id) {
   const t = state.orario.docenti[id], a = state.disp.find(x => x.id === id && !x.del) || { id, slot: [], nota: "" };
@@ -926,7 +982,7 @@ function editDisp(id) {
   let g = `<div class="grid"><div></div>${E.DAYS.map(d => `<div><b>${d}</b></div>`).join("")}`;
   for (let o = 1; o <= nh; o++) { g += `<div style="padding-top:7px">${o}ª</div>`; for (const d of E.DAYS) { if (["GIO", "VEN"].includes(d) && o === 7) { g += `<div></div>`; continue; } const cell = t.orario[d + o]; const free = !cell; g += `<div class="c ${free ? "" : "occ"} ${sel.has(d + o) ? "on" : ""}" ${free || sel.has(d + o) ? `data-act="slot" data-s="${d}${o}"` : ""}>${free ? "" : esc(cell)}</div>`; } }
   g += "</div>";
-  dlg(`<h3 style="margin-top:0">Ore eccedenti · ${esc(nice(id))}</h3><p class="mut">Tocca le ore libere in cui è disponibile. Nessuna ora selezionata = qualsiasi ora libera nei giorni in cui è a scuola.</p>${g}<label class="f">Nota</label><input id="ed_nota" value="${esc(a.nota || "")}"><label style="display:block;margin-top:8px"><input type="checkbox" id="ed_dv" ${a.dv ? "checked" : ""}> orari da verificare (⚠)</label><div class="row" style="margin-top:12px"><button class="b pri" data-act="dispsave">Salva</button><button class="b" data-act="dlgclose">Annulla</button></div>`);
+  dlg(`<h3 style="margin-top:0">Ore eccedenti · ${esc(nice(id))}</h3><p class="mut">Toccare le ore libere in cui il docente è disponibile. Nessuna ora selezionata = qualsiasi ora libera nei giorni in cui è a scuola.</p>${g}<label class="f">Nota</label><input id="ed_nota" value="${esc(a.nota || "")}"><label style="display:block;margin-top:8px"><input type="checkbox" id="ed_dv" ${a.dv ? "checked" : ""}> orari da verificare (⚠)</label><div class="row" style="margin-top:12px"><button class="b pri" data-act="dispsave">Salvare</button><button class="b" data-act="dlgclose">Annullare</button></div>`);
 }
 
 /* ============ azioni ============ */
@@ -935,15 +991,15 @@ function readForm() {
 }
 function calc(later) {
   const f = readForm();
-  if (!f.docente) return toast("Scegli il docente");
-  if (!f.dal) return toast("Scegli la data");
+  if (!f.docente) return toast("Scegliere il docente");
+  if (!f.dal) return toast("Scegliere la data");
   if (f.al && f.al < f.dal) return toast("La data finale è prima di quella iniziale");
-  if (!f.tutto && !f.ore.length) return toast("Scegli le ore oppure «Tutto il giorno»");
+  if (!f.tutto && !f.ore.length) return toast("Scegliere le ore oppure «Tutto il giorno»");
   if (!E.datesBetween(f.dal, f.al && f.al >= f.dal ? f.al : f.dal).some(x => E.dayCode(x) && !closedOn(x))) return toast("I giorni scelti sono festivi o di chiusura della scuola");
   if (f.tutto && f.motivo === "Permesso breve") return toast("Per tutto il giorno il motivo non può essere «Permesso breve»");
   if (!f.tutto) f.motivo = "Permesso breve";
   const pc = permessoCalc(f), over = pc.find(p => p.eccesso > 0);
-  if (over) return toast(`Permesso breve: il massimo per ${fmtDate(over.data)} è ${over.max} ${over.max === 1 ? "ora" : "ore"} su ${over.tot}. Togli ${over.eccesso} ${over.eccesso === 1 ? "ora" : "ore"}.`);
+  if (over) return toast(`Permesso breve: il massimo per ${fmtDate(over.data)} è ${over.max} ${over.max === 1 ? "ora" : "ore"} su ${over.tot}. Occorre togliere ${over.eccesso} ${over.eccesso === 1 ? "ora" : "ore"}.`);
   const a = { id: uid(), docente: f.docente, dal: f.dal, al: f.al && f.al !== f.dal ? f.al : "", ore: f.tutto ? "tutto" : [...f.ore].sort(), motivo: f.motivo, nota: f.nota };
   const nSost = E.coverNeeds(state, { ...a, al: a.al || a.dal }).filter(n => n.tipo === "sostegno").length;
   if (!later && nSost) { ui.draft = null; ui.sostAsk = { a, pc, promemoria: f.promemoria, nSost }; render(); setTimeout(() => $("#sostcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
@@ -956,10 +1012,10 @@ function calc(later) {
 }
 function vSostAsk() {
   const q = ui.sostAsk, nT = E.coverNeeds(state, { ...q.a, al: q.a.al || q.a.dal }).length, altre = nT - q.nSost;
-  return `<div class="card" id="sostcard"><h2>Docente di sostegno</h2><p>${esc(nice(q.a.docente))} ha ${q.nSost} ${q.nSost === 1 ? "ora" : "ore"} di sostegno da coprire${altre ? ` e ${altre} ${altre === 1 ? "ora" : "ore"} di lezione` : ""}. Vuoi sostituirle?</p>
-  <div class="opts"><button type="button" class="opt g1" data-act="sostno"><span class="mk"></span><span><b>Non sostituire il sostegno</b><small>Registro solo l'assenza: nessuna ora scoperta e nessun avviso${altre ? ". Le ore di lezione le propongo comunque" : ""}</small></span></button>
-  <button type="button" class="opt g3" data-act="sostsi"><span class="mk"></span><span><b>Proponi le sostituzioni</b><small>Scelgo i sostituti ora per ogni ora</small></span></button></div>
-  <div class="row" style="margin-top:10px"><button class="b" data-act="sostcancel">Annulla</button></div></div>`;
+  return `<div class="card" id="sostcard"><h2>Docente di sostegno</h2><p>${esc(nice(q.a.docente))} ha ${q.nSost} ${q.nSost === 1 ? "ora" : "ore"} di sostegno${altre ? ` e ${altre} ${altre === 1 ? "ora" : "ore"} di lezione` : ""}. Sostituirle?</p>
+  <div class="opts"><button type="button" class="opt g1" data-act="sostno"><span class="mk"></span><span><b>Non sostituire il sostegno</b><small>L'assenza viene solo registrata: nessuna ora scoperta e nessun avviso${altre ? ". Le ore di lezione vengono proposte comunque" : ""}</small></span></button>
+  <button type="button" class="opt g3" data-act="sostsi"><span class="mk"></span><span><b>Proporre le sostituzioni</b><small>I sostituti si scelgono ora, ora per ora</small></span></button></div>
+  <div class="row" style="margin-top:10px"><button class="b" data-act="sostcancel">Annullare</button></div></div>`;
 }
 function sostBuild(senza) {
   const q = ui.sostAsk, ass = { ...q.a, al: q.a.al || q.a.dal };
@@ -982,8 +1038,8 @@ function saveDraft(later) {
   const a = put("assenze", { ...dd.assenza });
   for (const r of dd.rows) put("sostituzioni", { assenzaId: a.id, data: r.data, ora: r.ora, classe: r.classe, classi: r.classi, materia: r.materia, tipo: r.tipo, assente: r.assente, sostituto: later ? null : r.sostituto, tier: later ? null : r.tier, anticipo: later ? false : !!r.anticipo, auto: r.auto, firmata: false, nosub: !!r.nosub, pending: !!later && r.auto !== false });
   for (const p of dd.permessi || []) if (p.rec > 0) { put("permessi", { docente: a.docente, data: p.data, ore: p.rec, fatteMan: 0, assenzaId: a.id }); const ex = state.recuperi.find(r => r.id === a.docente && !r.del); put("recuperi", { id: a.docente, ore: (ex ? ex.ore : 0) + p.rec }); }
-  if (dd.promemoria) { const n = dd.rows.filter(r => r.sostituto).length; put("eventi", { titolo: `Assenza ${nice(a.docente)}`, data: a.dal, ora: "07:30", durata: 30, nota: later ? `${dd.rows.length} ore da coprire (sostituzioni da definire)` : `${dd.rows.length} ore da coprire (${n} con sostituto)`, ripeti: "", auto: true, ref: a.id }); }
-  ui.draft = null; ui.form = null; ui.date = a.dal; ui.tab = "oggi"; commit(); window.scrollTo(0, 0); { const gg = new Set(dd.rows.map(r => r.data)).size; ui.date = firstSchoolDay(a.dal); toast(later ? "Assenza salvata: sostituzioni da definire" : dd.rows.every(r => r.nosub) ? "Assenza salvata, senza sostituzione" : gg > 1 ? `Assenza salvata: ${dd.rows.length} ore su ${gg} giorni (usa le frecce o i giorni in alto)` : "Assenza e sostituzioni salvate"); }
+  if (dd.promemoria) { const n = dd.rows.filter(r => r.sostituto).length; put("eventi", { titolo: `Assenza ${nice(a.docente)}`, data: a.dal, ora: "07:30", durata: 30, nota: (() => { const cop = dd.rows.filter(r => !r.nosub).length; return !cop ? "Docente di sostegno: nessuna sostituzione prevista" : later ? `${cop} ${cop === 1 ? "ora" : "ore"} da coprire (sostituzioni da definire)` : `${cop} ${cop === 1 ? "ora" : "ore"} da coprire (${n} con sostituto)`; })(), ripeti: "", auto: true, ref: a.id }); }
+  ui.draft = null; ui.form = null; ui.date = a.dal; ui.tab = "oggi"; commit(); window.scrollTo(0, 0); { const gg = new Set(dd.rows.map(r => r.data)).size; ui.date = firstSchoolDay(a.dal); toast(later ? "Assenza salvata: sostituzioni da definire" : dd.rows.every(r => r.nosub) ? "Assenza salvata, senza sostituzione" : gg > 1 ? `Assenza salvata: ${dd.rows.length} ore su ${gg} giorni (frecce o giorni in alto per scorrere)` : "Assenza e sostituzioni salvate"); }
 }
 function delAbs(id) {
   if (!confirm("Eliminare questa assenza e le sue sostituzioni?")) return;
@@ -1032,7 +1088,7 @@ document.addEventListener("click", e => {
   else if (a === "delev") { del("eventi", id); commit(); }
   else if (a === "notif") Notification.requestPermission().then(render);
   else if (a === "backup") download(`backup_sostituzioni_${todayStr()}.json`, JSON.stringify(state), "application/json");
-  else if (a === "recadd") { const k = $("#rec_sel").value, n = Math.floor(+$("#rec_n").value), d = $("#rec_d").value; if (!k || !(n > 0)) return toast("Scegli docente e ore"); const ex = state.recuperi.find(r => r.id === k); put("recuperi", { id: k, ore: (ex && !ex.del ? ex.ore : 0) + n }); if (d) put("permessi", { docente: k, data: d, ore: n, fatteMan: 0, assenzaId: null, manuale: true }); commit(); toast(d ? "Ore aggiunte al registro" : "Ore aggiunte"); }
+  else if (a === "recadd") { const k = $("#rec_sel").value, n = Math.floor(+$("#rec_n").value), d = $("#rec_d").value; if (!k || !(n > 0)) return toast("Scegliere docente e ore"); const ex = state.recuperi.find(r => r.id === k); put("recuperi", { id: k, ore: (ex && !ex.del ? ex.ore : 0) + n }); if (d) put("permessi", { docente: k, data: d, ore: n, fatteMan: 0, assenzaId: null, manuale: true }); commit(); toast(d ? "Ore aggiunte al registro" : "Ore aggiunte"); }
   else if (a === "recdel") { del("recuperi", id); commit(); }
   else if (a === "dispedit") editDisp(id);
   else if (a === "slot") { const s = t.dataset.s, sel = ui._disp.sel; sel.has(s) ? sel.delete(s) : sel.add(s); t.classList.toggle("on"); }
@@ -1040,22 +1096,27 @@ document.addEventListener("click", e => {
   else if (a === "login") { cfg.clientId = ($("#cid").value || "").trim(); delete cfg.folder; localStorage.setItem(CFGKEY, JSON.stringify(cfg)); login(); }
   else if (a === "wipe") {
     const sync = !!getTok();
-    if (!confirm(sync ? "Cancello dal browser tutti i dati, l'accesso e le impostazioni? Restano al sicuro su OneDrive e li ritrovi riaccedendo." : "Non sei collegato a OneDrive: i dati di questo dispositivo andrebbero persi. Scarica prima un backup. Cancellare comunque?")) return;
+    if (!confirm(sync ? "Cancellare dal browser tutti i dati, l'accesso e le impostazioni? Restano al sicuro su OneDrive e si ritrovano riaccedendo." : "Il dispositivo non è collegato a OneDrive: i dati andrebbero persi. Meglio scaricare prima un backup. Cancellare comunque?")) return;
     clearTimeout(syncTimer);
     [KEY, TOKKEY, CFGKEY].forEach(k => localStorage.removeItem(k)); sessionStorage.clear();
     state = emptyState(); cfg = {}; location.replace(location.href.split(/[?#]/)[0]);
   }
   else if (a === "logout") { localStorage.removeItem(TOKKEY); ui.sync = { st: "off", msg: "disconnesso" }; render(); }
   else if (a === "gotorec") { ui.tab = "registro"; render(); window.scrollTo(0, 0); }
+  else if (a === "recplus") { const k = t.dataset.k, it = permessiStato().filter(i => i.p.docente === k && i.res > 0).sort((x, y) => x.scad.localeCompare(y.scad))[0], ex = state.recuperi.find(r => r.id === k && !r.del);
+    if (it) { it.p.fatteMan = (it.p.fatteMan || 0) + 1; touch(it.p); if (ex) { ex.ore = Math.max(0, ex.ore - 1); touch(ex); } commit(); }
+    else if (ex && ex.ore - usedRecuperi(k) > 0) { ex.ore--; touch(ex); commit(); } }
+  else if (a === "recminus") { const k = t.dataset.k, p = state.permessi.filter(x => !x.del && x.docente === k && x.fatteMan > 0).sort((x, y) => y.data.localeCompare(x.data))[0]; if (!p) return; p.fatteMan--; touch(p); const ex = state.recuperi.find(r => r.id === k && !r.del); put("recuperi", { id: k, ore: (ex ? ex.ore : 0) + 1 }); commit(); }
+  else if (a === "recx") { const k = t.dataset.k; if (!confirm("Togliere dall'elenco le ore da recuperare di questo docente?")) return; del("recuperi", k); permessiStato().filter(i => i.p.docente === k && i.res > 0).forEach(i => { i.p.del = true; touch(i.p); }); commit(); }
   else if (a === "recman") { const p = state.permessi.find(x => x.id === t.dataset.id), d = +t.dataset.d; if (!p) return; const it = permessiStato().find(i => i.p.id === p.id); const ex = state.recuperi.find(r => r.id === p.docente && !r.del);
     if (d > 0 && it && it.res > 0) { p.fatteMan = (p.fatteMan || 0) + 1; touch(p); if (ex) { ex.ore = Math.max(0, ex.ore - 1); touch(ex); } commit(); }
     else if (d < 0 && p.fatteMan > 0) { p.fatteMan--; touch(p); put("recuperi", { id: p.docente, ore: (ex ? ex.ore : 0) + 1 }); commit(); } }
   else if (a === "draftpick") { const r = ui.draft.rows[+t.dataset.i], v = t.dataset.v, y = scrollY; if (!v) { r.sostituto = null; r.tier = null; r.anticipo = false; } else { const [n, tr, an] = v.split("|"); r.sostituto = n; r.tier = +tr; r.anticipo = an === "1"; } render(); scrollTo(0, y); }
   else if (a === "espick") { $("#es_val").value = t.dataset.v; $$("#dlg .opt, #dlg .mc").forEach(x => x.classList.remove("sel")); t.classList.add("sel"); }
   else if (a === "chiudel") { const S = state.settings; S.chiusure = (S.chiusure || []).filter(c => c.id !== id); touch(S); commit(); }
-  else if (a === "chiuadd") { const dal = $("#ch_dal").value, al = $("#ch_al").value; if (!dal) return toast("Scegli la data"); if (al && al < dal) return toast("La data finale è prima di quella iniziale"); const S = state.settings; S.chiusure = (S.chiusure || []).concat({ id: uid(), dal, al: al || "", nota: $("#ch_nota").value.trim() || "Chiusura" }); touch(S); commit(); toast("Chiusura aggiunta"); }
+  else if (a === "chiuadd") { const dal = $("#ch_dal").value, al = $("#ch_al").value; if (!dal) return toast("Scegliere la data"); if (al && al < dal) return toast("La data finale è prima di quella iniziale"); const S = state.settings; S.chiusure = (S.chiusure || []).concat({ id: uid(), dal, al: al || "", nota: $("#ch_nota").value.trim() || "Chiusura" }); touch(S); commit(); toast("Chiusura aggiunta"); }
   else if (a === "veneto") { applyVeneto(); commit(); toast("Calendario del Veneto 2026/27 caricato"); }
-  else if (a === "caltest") { if (!calCfg()) return toast("Scrivi prima l'indirizzo dello script"); toast("Provo a leggere il calendario…"); calLoad(ui.date, true).then(() => toast(ui.calErr ? "Non funziona: " + ui.calErr : "Calendario letto: ora lo vedi nella schermata Oggi")); }
+  else if (a === "caltest") { if (!calCfg()) return toast("Scrivere prima l'indirizzo dello script"); toast("Lettura del calendario in corso…"); calLoad(ui.date, true).then(() => toast(ui.calErr ? "Non funziona: " + ui.calErr : "Calendario letto: ora è visibile nella schermata Oggi")); }
   else if (a === "defsub") {
     const as = state.assenze.find(x => x.id === id && !x.del); if (!as) return;
     const rows = E.propose(state, { ...as, al: as.al || as.dal });
@@ -1065,7 +1126,7 @@ document.addEventListener("click", e => {
   else if (a === "regmonth") { const m = ui.regMonths || (ui.regMonths = []), k = t.dataset.k; ui.regMonths = m.includes(k) ? m.filter(x => x !== k) : [...m, k]; render(); }
   else if (a === "regmonthsall") { ui.regMonths = annoScolasticoMesi(); render(); }
   else if (a === "regmonthsnone") { ui.regMonths = []; render(); }
-  else if (a === "recdelperm") { const it = permessiStato().find(i => i.p.id === id); if (!it || !confirm("Togliere queste ore dal registro?")) return; const ex = state.recuperi.find(r => r.id === it.p.docente && !r.del); if (ex) { ex.ore = Math.max(0, ex.ore - (it.p.ore - (it.p.fatteMan || 0))); touch(ex); } it.p.del = true; touch(it.p); commit(); }
+  else if (a === "recdelperm") { const it = permessiStato().find(i => i.p.id === id); if (!it || !confirm("Togliere queste ore dall'elenco?")) return; const ex = state.recuperi.find(r => r.id === it.p.docente && !r.del); if (ex) { ex.ore = Math.max(0, ex.ore - (it.p.ore - (it.p.fatteMan || 0))); touch(ex); } it.p.del = true; touch(it.p); commit(); }
   else if (a === "tema") { try { t.dataset.v ? localStorage.setItem(THEMEKEY, t.dataset.v) : localStorage.removeItem(THEMEKEY); } catch (e) { } applyTheme(); render(); }
   else if (a === "syncnow") sync(true);
 });
@@ -1101,8 +1162,8 @@ function redirectUri() { return location.origin === "null" ? "(file locale)" : l
 function getTok() { try { return JSON.parse(localStorage.getItem(TOKKEY)); } catch (e) { return null; } }
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 async function login() {
-  if (!cfg.clientId) return toast("Inserisci prima il Client ID");
-  if (location.protocol === "file:") return toast("Serve un indirizzo https (vedi guida)");
+  if (!cfg.clientId) return toast("Inserire prima il Client ID");
+  if (location.protocol === "file:") return toast("Serve un indirizzo https (vedere la guida)");
   const ver = b64u(crypto.getRandomValues(new Uint8Array(48))), chal = b64u(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ver)));
   sessionStorage.setItem("sost_pkce", ver);
   location.href = AUTH + "/authorize?" + new URLSearchParams({ client_id: cfg.clientId, response_type: "code", redirect_uri: redirectUri(), response_mode: "query", scope: scopeNow(), code_challenge: chal, code_challenge_method: "S256", prompt: "select_account" });
@@ -1125,13 +1186,13 @@ async function accessToken() {
   let t = getTok(); if (!t) return null;
   if (Date.now() < t.exp) return t.access;
   try { t = await tokenReq({ grant_type: "refresh_token", refresh_token: t.refresh }); return t.access; }
-  catch (e) { if (e instanceof TypeError) throw e; localStorage.removeItem(TOKKEY); ui.sync = { st: "login", msg: "sessione scaduta: riaccedi" }; renderSyncBadge(); return null; }
+  catch (e) { if (e instanceof TypeError) throw e; localStorage.removeItem(TOKKEY); ui.sync = { st: "login", msg: "sessione scaduta: accedere di nuovo" }; renderSyncBadge(); return null; }
 }
 let syncTimer = null, syncing = false;
 function scheduleSync() { if (!getTok()) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => sync(false), 1500); }
 async function sync(manual) {
-  if (syncing) return; if (!cfg.clientId || !getTok()) { if (manual) toast("Accedi prima a Microsoft"); return; }
-  syncing = true; ui.sync = { st: "busy", msg: "sincronizzo" }; renderSyncBadge();
+  if (syncing) return; if (!cfg.clientId || !getTok()) { if (manual) toast("Accedere prima a Microsoft"); return; }
+  syncing = true; ui.sync = { st: "busy", msg: "sincronizzazione in corso" }; renderSyncBadge();
   try {
     const tok = await accessToken(); if (!tok) { syncing = false; return; }
     const H = { Authorization: "Bearer " + tok };
@@ -1146,7 +1207,7 @@ async function sync(manual) {
       if (p.ok) { ui.sync = { st: "ok", msg: "ultimo salvataggio " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) }; render(); if (manual) toast("Sincronizzato"); syncing = false; return; }
       if (p.status !== 412 && p.status !== 409) throw new Error("OneDrive " + p.status);
     }
-    throw new Error("conflitto ripetuto, riprova");
+    throw new Error("conflitto ripetuto: riprovare");
   } catch (e) { ui.sync = e instanceof TypeError ? { st: "offline", msg: "offline: i dati sono salvati sul dispositivo" } : { st: "err", msg: e.message }; renderSyncBadge(); }
   syncing = false;
 }
@@ -1157,7 +1218,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 (async function init() {
   await handleRedirect();
   render();
-  if (getTok()) sync(false); else if (cfg.clientId && ui.sync.st === "off") { ui.sync = { st: "login", msg: "accedi a Microsoft per sincronizzare" }; renderSyncBadge(); }
+  if (getTok()) sync(false); else if (cfg.clientId && ui.sync.st === "off") { ui.sync = { st: "login", msg: "accedere a Microsoft per sincronizzare" }; renderSyncBadge(); }
   setInterval(checkNotifiche, 30000);
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => { });
 })();
