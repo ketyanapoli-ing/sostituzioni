@@ -195,20 +195,33 @@ header.top .school{flex:0 0 100%;text-align:center;font:500 11px/1.2 var(--sans)
   .rt-row .ac{grid-column:1/-1}
 }
 
-/* --- report: versione larga su una riga per sostituzione --- */
+/* --- intestazione: scuola in alto al centro, data e ora sotto --- */
+.brand{background:var(--board);color:var(--chalk);text-align:center;padding:calc(12px + env(safe-area-inset-top)) max(14px,calc((100% - 900px)/2 + 14px)) 4px}
+.brand .b1{font:700 19px/1.15 var(--serif);letter-spacing:.01em}
+.brand .b2{font:600 13px/1.2 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--hl);margin-top:3px}
+.brand::after{content:"";display:block;width:56px;height:2px;margin:9px auto 0;background:var(--hl);opacity:.55;border-radius:2px}
+header.top{padding-top:6px}
+header.top .school{display:none}
+.hero-date{display:flex;flex-direction:column;align-items:center;gap:2px}
+.hero-date .dm{font:700 20px/1.15 var(--serif)}
+.hero-date .clk{font:600 13px/1.1 var(--sans);color:var(--chalk2);text-transform:none;min-height:14px}
+@media (max-width:380px){.brand .b1{font-size:17px}.hero-date .dm{font-size:18px}}
+
+/* --- report su schermo largo: schede in griglia, non una sotto l'altra --- */
+.rgrid{display:block}
 @media (min-width:700px){
-  .rr{padding:6px 4px}
-  .rm{display:flex;gap:22px;align-items:center;flex-wrap:nowrap;line-height:1.3}
-  .rm>div{flex:1 1 0;min-width:0}
-
-
-  .rg{flex-direction:row;min-width:0;padding:6px 12px;gap:8px;font-size:.85em}
-  .rg input{width:20px;height:20px}
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;margin-bottom:6px}
+  .rgrid .rr{border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:var(--surface)}
+  .rgrid .rm{display:block;line-height:1.45}.rgrid .rm>div{flex:none}
+  .rgrid .rg{flex-direction:column;min-width:74px;padding:8px 10px;font-size:.78em;gap:4px}
+  .rgrid .rg input{width:26px;height:26px}
 }
-.hero-date .clk{text-transform:none}
+.nosub{color:var(--ok);font-weight:700}
+.slot .nosub{font-size:14px}
 </style>
 </head>
 <body>
+<div class="brand" id="brand"><div class="b1">I.C. «E. De Amicis» - Eraclea</div><div class="b2">Plesso «L. Da Vinci»</div></div>
 <header class="top" id="top"></header>
 <div id="band" class="band"></div>
 <main id="app"></main>
@@ -540,18 +553,18 @@ function ensureCalendar() {
 }
 const TABTITLE = { oggi: "Oggi", assenze: "Assenze", registro: "Report", promemoria: "Promemoria", impostazioni: "Impostazioni" };
 const nowHM = () => new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-setInterval(() => { const e = document.querySelector(".clk"); if (e && e.textContent) e.textContent = " · ore " + nowHM(); }, 20000);
+setInterval(() => { const e = document.querySelector(".clk"); if (e && e.textContent) e.textContent = "ore " + nowHM(); }, 20000);
 function renderTop() {
   const d = ui.date, dt = new Date(d + "T12:00:00"), wd = dt.toLocaleDateString("it-IT", { weekday: "long" }), dm = dt.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
   $("#top").innerHTML = `<button class="ic" data-act="dayprev" aria-label="Giorno precedente">‹</button>
-  <label class="hero-date"><span class="wd">${esc(wd)}<span class="clk">${d === todayStr() ? " · ore " + nowHM() : ""}</span></span> <span class="dm">${esc(dm)} ${dt.getFullYear()}</span><input type="date" value="${d}" data-act="daypick" aria-label="Scegliere la data"></label>
-  <button class="ic" data-act="daynext" aria-label="Giorno successivo">›</button><button id="syncbadge" class="badge" onclick="ui.tab='impostazioni';render()">☁</button><div class="school">I.C. «E. De Amicis» - Eraclea · Plesso «L. Da Vinci»</div>`;
+  <label class="hero-date"><span class="dm">${esc(wd.charAt(0).toUpperCase() + wd.slice(1))} ${esc(dm)} ${dt.getFullYear()}</span><span class="wd clk">${d === todayStr() ? "ore " + nowHM() : ""}</span><input type="date" value="${d}" data-act="daypick" aria-label="Scegliere la data"></label>
+  <button class="ic" data-act="daynext" aria-label="Giorno successivo">›</button><button id="syncbadge" class="badge" onclick="ui.tab='impostazioni';render()">☁</button>`;
   let b = "";
   if (ui.tab === "oggi" && state.orario && closedOn(d)) {
     b = `<div class="hero-row"><span class="stat">${esc(closedOn(d))}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>`;
   } else if (ui.tab === "oggi" && state.orario) {
     const day = subs().filter(x => x.data === d), real = day.filter(x => x.auto !== false), cov = real.filter(x => x.sostituto).length, unc = real.length - cov, assenti = [...new Set(day.map(x => x.assente))].sort();
-    b = `<div class="hero-row"><span class="stat"><b>${cov}</b> ${cov === 1 ? "coperta" : "coperte"}</span><span class="stat ${unc ? "bad" : ""}"><b>${unc}</b> ${unc === 1 ? "scoperta" : "scoperte"}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>${assenti.length ? `<p class="absent-line">Assenti: <b>${assenti.map(a => esc(nice(a))).join(", ")}</b></p>` : ""}`;
+    b = `<div class="hero-row"><span class="stat"><b>${cov}</b> ${cov === 1 ? "coperta" : "coperte"}</span><span class="stat ${unc ? "bad" : ""}"><b>${unc}</b> ${unc === 1 ? "scoperta" : "scoperte"}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>${assenti.length ? `<p class="absent-line">Assenti: <b>${assenti.map(a => esc(nice(a)) + (day.filter(x => x.assente === a).every(x => x.nosub) ? " (sostegno non sostituito)" : "")).join(", ")}</b></p>` : ""}`;
   } else b = `<div class="hero-row"><h1 class="tab-title">${esc(TABTITLE[ui.tab])}</h1>${ui.tab === "assenze" || !state.orario ? "" : `<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button>`}</div>`;
   $("#band").innerHTML = b;
 }
@@ -580,6 +593,8 @@ function vOggi() {
   let h = "";
   const evs = eventiDelGiorno(d);
   if (evs.length) h += `<div class="card"><h3>Promemoria</h3>${evs.map(e => `<div class="sub"><div class="h">${esc(e.ora || "")}</div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div></div>`).join("")}</div>`;
+  const nsAbs = [...new Set(day.filter(x => x.nosub).map(x => x.assente))];
+  if (nsAbs.length) h += `<div class="ok-note"><b>Sostegno non sostituito:</b> ${nsAbs.map(a => `${esc(nice(a))} (${day.filter(x => x.assente === a && x.nosub).length} ${day.filter(x => x.assente === a && x.nosub).length === 1 ? "ora" : "ore"})`).join(", ")}. L'assenza è solo registrata: nessuna sostituzione prevista.</div>`;
   h += recAlert() + pendAlert() + calBox(d);
   const cn = closedOn(d);
   const multi = E.activeAbs(state).filter(a => a.al && a.al !== a.dal && d >= a.dal && d <= a.al);
@@ -592,7 +607,7 @@ function vOggi() {
     h += `<div class="hour"><div class="ruler"><b>${n}ª</b><small>${esc(oraLabel(n).replace("–", "–​"))}</small></div><div class="slots">`;
     for (const s of rows) {
       const none = s.classe === "—", open = s.auto !== false && !s.sostituto;
-      const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo)}` : s.nosub ? `<span class="mut">Non sostituita</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
+      const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo)}` : s.nosub ? `<span class="nosub">Sostegno non sostituito</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
       h += `<div class="slot ${open ? "open" : ""}"><div class="cls ${none ? "na" : s.classe.length > 3 ? "sm" : ""}">${none ? "IRC" : esc(s.classe)}</div>
       <div class="who"><div class="l1">${who}</div><div class="l2">${esc(nice(s.materia))}, ${esc(nice(s.assente))} assente</div></div>
       <div class="act">${s.sostituto ? `<label class="chk"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}>sul registro</label>` : ""}<button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div></div>`;
@@ -702,7 +717,7 @@ function vRecGest() {
     <div class="c" data-l="Recuperate">${r.usate}</div><div class="c" data-l="Residue"><b>${r.res}</b></div>
     <div class="c" data-l="Scadenza">${r.next ? esc(fmtDate(r.next.scad)) + "<br><small>" + recWhen(r.next) + "</small>" : "—"}</div>
     <div class="c ac"><button class="b sm" data-act="recminus" data-k="${esc(r.k)}" aria-label="Annullare un'ora recuperata" ${r.man ? "" : "disabled"}>−1</button><button class="b sm pri" data-act="recplus" data-k="${esc(r.k)}" aria-label="Un'ora recuperata" ${r.res ? "" : "disabled"}>+1</button><button class="b sm bad" data-act="recx" data-k="${esc(r.k)}" aria-label="Togliere il docente dall'elenco">✕</button></div></div>`;
-  return `<div class="card" id="reccard"><h2>Ore da recuperare — docenti che devono recuperare</h2><p class="mut">Le ore diminuiscono quando il docente svolge una sostituzione come «recupero». Usare +1 se l'ora è stata recuperata in altro modo.</p>
+  return `<div class="card" id="reccard"><h2>Recuperi: ore e docenti</h2><p class="mut">Le ore diminuiscono quando il docente svolge una sostituzione come «recupero». Usare +1 se l'ora è stata recuperata in altro modo.</p>
     ${rows.length ? `<div class="rt"><div class="rt-head"><div>Docente</div><div>Da recuperare</div><div>Recuperate</div><div>Residue</div><div>Scadenza</div><div></div></div>${rows.map(row).join("")}</div>` : '<div class="ok-note">Nessuna ora da recuperare.</div>'}
     <h3 style="margin-top:16px">Aggiungere ore da recuperare a mano</h3>
     <label class="f">Docente</label><select id="rec_sel"><option value="">— scegliere —</option>${teachers().map(t => `<option value="${esc(t.k)}">${esc(nice(t.k))}</option>`).join("")}</select>
@@ -778,8 +793,8 @@ function vAssenze() {
   const abs = E.activeAbs(state).sort((a, b) => b.dal.localeCompare(a.dal)).slice(0, 40);
   h += `<div class="card"><h3>Assenze registrate</h3>${abs.length ? abs.map(a => {
     const n = subs().filter(s => s.assenzaId === a.id).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora), u = n.filter(s => s.auto !== false && !s.sostituto), pend = u.some(s => s.pending);
-    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.filter(s => s.sostituto).length} sostituzioni${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definisci" : "Riproponi"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
-    ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · correggi</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo) : s.nosub ? "Non sostituita" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</details>` : ""}</div>`;
+    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.some(s => s.nosub) && !n.some(s => !s.nosub) ? `<span class="nosub">sostegno non sostituito (${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : (c => `${c} ${c === 1 ? "sostituzione" : "sostituzioni"}`)(n.filter(s => s.sostituto).length)}${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definire" : "Riproporre"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
+    ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · da correggere</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo) : s.nosub ? "Sostegno non sostituito" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</details>` : ""}</div>`;
   }).join("") : '<span class="mut">Nessuna assenza.</span>'}</div>`;
   h += vRecGest();
   return h;
@@ -817,7 +832,7 @@ const meseLabel = k => MESI[+k.slice(5) - 1] + " " + k.slice(0, 4);
 function regRows() {
   if (ui.regMode === "mesi") { const ms = (ui.regMonths || []).slice().sort(), set = new Set(ms); return { a: ms[0] ? ms[0] + "-01" : "", b: ms.length ? ms[ms.length - 1] + "-31" : "", label: ms.length ? ms.map(meseLabel).join(", ") : "nessun mese scelto", rows: subs().filter(s => set.has(s.data.slice(0, 7))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
   const [a, b] = rangeOf(ui.regMode, ui.regDate); return { a, b, label: `dal ${fmtShort(a)} al ${fmtShort(b)}`, rows: subs().filter(s => s.data >= a && s.data <= b).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
-const statoNoSub = s => s.nosub ? "non sostituita" : s.auto === false ? "da gestire a mano" : s.pending ? "da assegnare" : "scoperta";
+const statoNoSub = s => s.nosub ? "non sostituita (sostegno)" : s.auto === false ? "da gestire a mano" : s.pending ? "da assegnare" : "scoperta";
 /* assenze registrate che toccano il periodo del report (anche senza ore da coprire) */
 function regAbs() {
   const { a, b } = regRows(), ms = ui.regMode === "mesi" ? new Set(ui.regMonths || []) : null;
@@ -831,9 +846,9 @@ function vRegistro() {
   const tr = rows.filter(s => s.firmata).length;
   let h = vRecuperi() + `<div class="card"><h2>Report sostituzioni</h2><div class="row"><select data-act="regmode">${["giorno", "settimana", "mese", "mesi"].map(m => `<option value="${m}" ${ui.regMode === m ? "selected" : ""}>${m === "mesi" ? "più mesi" : m}</option>`).join("")}</select>${ui.regMode === "mesi" ? "" : `<input type="date" value="${ui.regDate}" data-act="regdate">`}<button class="b" data-act="xlsx">Esportare in Excel</button></div>
   ${ui.regMode === "mesi" ? `<div class="chips" style="margin-top:10px">${annoScolasticoMesi().map(k => `<span class="chip ${(ui.regMonths || []).includes(k) ? "on" : ""}" data-act="regmonth" data-k="${k}"><b>${MESI[+k.slice(5) - 1]}</b><small>${k.slice(0, 4)}</small></span>`).join("")}</div><div class="row" style="margin-top:8px"><button class="b sm" data-act="regmonthsall">Tutti</button><button class="b sm" data-act="regmonthsnone">Nessuno</button></div>` : ""}</div>`;
-  h += `<div class="card"><h3>Assenze nel periodo (${ab.length})</h3>${ab.length ? ab.map(x => { const st = absStat(x); return `<div class="sub"><div class="m"><b>${esc(nice(x.docente))}</b> · ${esc(fmtDate(x.dal))}${x.al && x.al !== x.dal ? " → " + esc(fmtDate(x.al)) : ""}<div class="mut">${x.ore === "tutto" ? "tutto il giorno" : "ore " + x.ore.join(", ")} · ${esc(x.motivo || "")} · ${st.tot ? `${st.sost} ${st.sost === 1 ? "ora sostituita" : "ore sostituite"}${st.tot - st.sost ? `, ${st.tot - st.sost} non sostituite` : ""}` : "nessuna ora da coprire"}</div></div></div>`; }).join("") : '<p class="mut">Nessuna assenza nel periodo.</p>'}</div>`;
+  h += `<div class="card"><h3>Assenze nel periodo (${ab.length})</h3>${ab.length ? ab.map(x => { const st = absStat(x); return `<div class="sub"><div class="m"><b>${esc(nice(x.docente))}</b> · ${esc(fmtDate(x.dal))}${x.al && x.al !== x.dal ? " → " + esc(fmtDate(x.al)) : ""}<div class="mut">${x.ore === "tutto" ? "tutto il giorno" : "ore " + x.ore.join(", ")} · ${esc(x.motivo || "")} · ${st.tot ? `${st.sost} ${st.sost === 1 ? "ora sostituita" : "ore sostituite"}${st.tot - st.sost ? `, ${st.tot - st.sost} non sostituite` : ""}${state.sostituzioni.some(z => z.assenzaId === x.id && !z.del && z.nosub) ? " (sostegno non sostituito)" : ""}` : "nessuna ora da coprire"}</div></div></div>`; }).join("") : '<p class="mut">Nessuna assenza nel periodo.</p>'}</div>`;
   h += `<div class="card"><h3>${esc(label)} — ${rows.length} ${rows.length === 1 ? "ora di assenza" : "ore di assenza"}${rows.length ? `, ${subbed.length} sostituite, ${tr} già sul registro` : ""}</h3>
-  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spuntare «Sul registro» quando l'ora è stata segnata sul registro cartaceo.</p>${rows.map((s, i) => (i && rows[i - 1].data === s.data ? "" : `<div class="dayh">${esc(fmtDate(s.data))}</div>`) + `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
+  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spuntare «Sul registro» quando l'ora è stata segnata sul registro cartaceo.</p>${[...new Set(rows.map(s => s.data))].map(d => `<div class="dayh">${esc(fmtDate(d))}</div><div class="rgrid">${rows.filter(s => s.data === d).map(s => `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}</div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
   const tot = {}; subbed.forEach(s => { const t = tot[s.sostituto] = tot[s.sostituto] || { n: 0, 1: 0, 2: 0, 3: 0, 4: 0, 0: 0 }; t.n++; t[s.tier || 0]++; });
   const names = Object.keys(tot).sort();
   if (names.length) h += `<div class="card"><h3>Riepilogo per docente</h3><div class="scroll"><table class="t"><thead><tr><th>Docente</th><th>Totale</th><th>A disp./alt.</th><th>Sostegno</th><th>Recupero</th><th>Eccedenti</th><th>Altro</th></tr></thead><tbody>${names.map(n => `<tr><td>${esc(nice(n))}</td><td>${tot[n].n}</td><td>${tot[n][1] || ""}</td><td>${tot[n][2] || ""}</td><td>${tot[n][3] || ""}</td><td>${tot[n][4] || ""}</td><td>${tot[n][0] || ""}</td></tr>`).join("")}</tbody></table></div></div>`;
@@ -949,10 +964,10 @@ function vImpostazioni() {
   <div class="row" style="margin-top:6px"><label>Max per un docente di sostegno al giorno <input type="number" min="0" max="7" value="${S.maxSostegnoGiorno}" data-act="maxsost" style="width:64px"></label></div></details>`;
   if (o) {
     const dis = Object.fromEntries(state.disp.filter(r => !r.del).map(r => [r.id, r]));
-    h += `<details class="card"><summary>Disponibilità ore eccedenti (${Object.keys(dis).length} docenti)</summary><p class="mut">Fascia 4 di priorità, dalla tabella «Disponibilità ad effettuare ore eccedenti». Toccando un docente si modificano le ore indicate. ⚠ = grafia incerta, da verificare.</p>
+    h += `<details class="card"><summary>Disponibilità ore eccedenti (${Object.keys(dis).length} docenti)</summary><p class="mut">Elenco dalla tabella «Disponibilità ad effettuare ore eccedenti». Toccando un docente si modificano le ore indicate. ⚠ = grafia incerta, da verificare.</p>
     <div class="scroll"><table class="t"><tr><th>Docente</th><th>Disponibile</th><th>Ore indicate</th><th></th></tr>${teachers().map(t => { const a = dis[t.k]; return `<tr><td>${esc(nice(t.k))}</td><td><input type="checkbox" data-act="dispon" data-id="${esc(t.k)}" ${a ? "checked" : ""}></td><td>${a ? (a.slot && a.slot.length ? esc(a.slot.map(s => DAYN[s.slice(0, 3)].slice(0, 3) + " " + s[3] + "ª").join(", ")) : "qualsiasi ora libera") + (a.dv ? " ⚠" : "") : ""}${a && a.nota ? `<div class="mut">${esc(a.nota)}</div>` : ""}</td><td>${a ? `<button class="b sm" data-act="dispedit" data-id="${esc(t.k)}">Modificare</button>` : ""}</td></tr>`; }).join("")}</table></div></details>`;
   }
-  h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (non anticipano l'ingresso)</li><li>Docenti a disposizione o impegnati nell'alternativa alla religione</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti di sostegno, solo se già nella classe e con moderazione</li><li>Docenti con disponibilità a ore eccedenti</li></ol><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa del docente assente si coprono con gli stessi criteri.</p></div>`;
+  h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti già presenti nella classe (sostegno e compresenza)</li><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (senza anticipare l'ingresso)</li><li>Docenti a disposizione o impegnati nell'alternativa alla religione</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti con disponibilità a ore eccedenti</li><li>Scelta manuale: docenti con lezione quel giorno e liberi in quell'ora</li></ol><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa del docente assente si coprono con gli stessi criteri.</p></div>`;
   return h;
 }
 function vSyncBox() {
@@ -962,7 +977,7 @@ function vSyncBox() {
   h += `<div class="row" style="margin-top:10px">`;
   h += `<button class="b pri" data-act="login">${tok ? "Accedere di nuovo" : "Accedere con Microsoft"}</button>`;
   if (tok) h += `<button class="b" data-act="syncnow">Sincronizzare ora</button><button class="b bad" data-act="logout">Uscire</button>`;
-  h += `</div><div class="row" style="margin-top:10px"><button class="b bad" data-act="wipe">Uscire e cancellare i dati da questo dispositivo</button></div><p class="mut" style="margin-top:6px">Da usare sempre su un computer che non è personale. I dati restano su OneDrive e si ritrovano riaccedendo.</p><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedere la guida): da file locale funziona solo offline." : ""}</p>`;
+  h += `</div><div class="row" style="margin-top:10px"><button class="b bad" data-act="wipe">Uscire e cancellare i dati da questo dispositivo</button></div><p class="mut" style="margin-top:6px">Da usare sempre su un computer che non è personale. I dati restano su OneDrive e si ritrovano riaccedendo.</p><p class="mut" style="margin-top:8px">Stato: ${esc(ui.sync.msg || ({ off: "non collegato", ok: "sincronizzato", busy: "sincronizzazione in corso", offline: "offline", login: "accesso richiesto", err: "errore" })[ui.sync.st] || ui.sync.st)}.${location.protocol === "file:" ? " <b>Per l'accesso Microsoft l'app deve stare su un indirizzo https</b> (vedere la guida): da file locale funziona solo offline." : ""}</p>`;
   return h;
 }
 
