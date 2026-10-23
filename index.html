@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E3C8C">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <script>try{var __t=localStorage.getItem("sost_theme");if(__t)document.documentElement.dataset.theme=__t}catch(e){}</script>
@@ -15,7 +15,7 @@
  --hl:#FFD84D;--hl-ink:#2E2500;--pen:#1F5FE0;--pen-bg:#E1EAFD;
  --ok:#16794C;--okbg:#E1F3EA;--bad:#C23B22;--badbg:#FCE9E5;--warn:#8A5A00;--warnbg:#FFF1CF;
  --t1:#16794C;--t2:#6A3FB5;--t3:#A15C00;--t4:#0E7490;--t0:#566786;
- --sans:"Source Sans 3","Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
+ --sans:"Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;
@@ -244,6 +244,8 @@ header.top .badge{justify-self:end;margin-left:0}
   .hourgrid .slot.open{border-color:var(--bad)}
 }
 header.top .hero-date{padding:0 12px}@media (max-width:420px){header.top .hero-date{padding:0 4px}}
+
+nav.tabs button{font-size:12px}.tag{font-size:12px}
 </style>
 </head>
 <body>
@@ -552,7 +554,7 @@ function optList(need, currentSubs, selected, act, idx) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "24/10/2026 · 5";
+const BUILD = "24/10/2026 · 6";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
