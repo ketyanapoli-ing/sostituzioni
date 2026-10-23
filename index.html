@@ -233,6 +233,17 @@ header.top .badge{justify-self:end;margin-left:0}
 .rgrid .rg{flex-direction:column;min-width:74px;padding:8px 10px;font-size:.78em;gap:4px}
 .rgrid .rg input{width:26px;height:26px}
 @media (max-width:420px){header.top .hero-date .dm{font-size:17px}header.top .dnav{gap:2px}}
+
+/* Oggi su schermo largo: le ore si dispongono in colonne */
+@media (min-width:700px){
+  .hourgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:6px 14px;align-items:start}
+  .hourgrid .ruler::after{display:none}
+  .hourgrid .hour{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;margin:0}
+  .hourgrid .slot{margin:0 0 6px;border-color:var(--line)}
+  .hourgrid .slot:last-child{margin-bottom:0}
+  .hourgrid .slot.open{border-color:var(--bad)}
+}
+header.top .hero-date{padding:0 12px}@media (max-width:420px){header.top .hero-date{padding:0 4px}}
 </style>
 </head>
 <body>
@@ -541,7 +552,7 @@ function optList(need, currentSubs, selected, act, idx) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "24/10/2026 · 4";
+const BUILD = "24/10/2026 · 5";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -618,6 +629,7 @@ function vOggi() {
   if (cn) h += `<div class="card empty"><b>${esc(cn)}</b>${wk ? "Scuola chiusa: nessuna lezione e nessuna sostituzione da fare." : "Nel fine settimana non ci sono lezioni."}</div>`;
   else if (!day.length) h += `<div class="card empty"><b>Nessuna assenza</b>Per questa data non c'è niente da coprire. Per registrare un'assenza usare «+ Assenza».</div>`;
   if (unc) h += `<div class="note bad"><b>${unc} ${unc === 1 ? "ora" : "ore"} senza sostituto.</b> Per sceglierlo a mano, usare «Cambiare» sulle righe rosse.</div>`;
+  h += '<div class="hourgrid">';
   for (let n = 1; n <= 7; n++) {
     const rows = day.filter(s => s.ora === n).sort((a, b) => a.classe.localeCompare(b.classe)); if (!rows.length) continue;
     h += `<div class="hour"><div class="ruler"><b>${n}ª</b><small>${esc(oraLabel(n).replace("–", "–​"))}</small></div><div class="slots">`;
@@ -630,6 +642,7 @@ function vOggi() {
     }
     h += `</div></div>`;
   }
+  h += '</div>';
   return h;
 }
 
