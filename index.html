@@ -568,7 +568,7 @@ function optList(need, currentSubs, selected, act, idx) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "24/10/2026 · 9";
+const BUILD = "24/10/2026 · 10";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -617,6 +617,11 @@ function calPicker(month) {
   <p class="mut" style="margin:10px 0 0;font-size:13px">Il pallino indica i giorni con assenze registrate; i giorni in grigio sono festivi o di chiusura.</p>
   <div class="row" style="margin-top:12px"><button class="b" data-act="caltoday">Andare a oggi</button><button class="b" data-act="dlgclose">Chiudere</button></div>`);
 }
+function syncWarn() {
+  if (!state.orario || ui.sync.st === "ok" || ui.sync.st === "busy") return "";
+  const m = { off: "Questo dispositivo non è collegato a OneDrive: le assenze registrate altrove non compaiono qui.", login: "Sessione OneDrive scaduta: le assenze non vengono né inviate né ricevute finché non si accede di nuovo.", offline: "Dispositivo offline: le modifiche vengono sincronizzate al ritorno della connessione.", err: "Sincronizzazione con OneDrive non riuscita (" + esc(ui.sync.msg || "errore") + ")." }[ui.sync.st];
+  return m ? `<div class="note bad">${m} <button class="link" data-act="gosync">Aprire Impostazioni</button></div>` : "";
+}
 function renderTop() {
   const d = ui.date, dt = new Date(d + "T12:00:00"), wd = dt.toLocaleDateString("it-IT", { weekday: "long" }), dm = dt.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
   $("#top").innerHTML = `<button class="ic calbtn" data-act="calopen" aria-label="Aprire il calendario mensile" title="Calendario"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></button><div class="dnav"><button class="ic" data-act="dayprev" aria-label="Giorno precedente">‹</button>
@@ -633,7 +638,7 @@ function renderTop() {
 }
 function syncFormDate() { if (ui.form && !ui.form.docente && !ui.draft) ui.form.dal = ui.date; }
 function render() {
-  $("#app").innerHTML = ui.tab === "oggi" ? vOggi() : ui.tab === "assenze" ? vAssenze() : ui.tab === "registro" ? vRegistro() : ui.tab === "promemoria" ? vPromemoria() : vImpostazioni();
+  $("#app").innerHTML = (ui.tab !== "impostazioni" ? syncWarn() : "") + (ui.tab === "oggi" ? vOggi() : ui.tab === "assenze" ? vAssenze() : ui.tab === "registro" ? vRegistro() : ui.tab === "promemoria" ? vPromemoria() : vImpostazioni());
   $$("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === ui.tab));
   ensureCalendar(); renderTop(); renderSyncBadge();
   if (ui.tab === "oggi") calLoad(ui.date);
@@ -1147,6 +1152,7 @@ document.addEventListener("click", e => {
   if (a === "goto") { ui.tab = t.dataset.tab; render(); }
   else if (a === "dayprev") { ui.date = schoolStep(ui.date, -1); syncFormDate(); render(); }
   else if (a === "daynext") { ui.date = schoolStep(ui.date, 1); syncFormDate(); render(); }
+  else if (a === "gosync") { ui.tab = "impostazioni"; render(); window.scrollTo(0, 0); }
   else if (a === "calopen") calPicker(ui.date.slice(0, 7));
   else if (a === "calmonth") calPicker(t.dataset.m);
   else if (a === "calday") { $("#dlg").close(); ui.date = t.dataset.date; ui.tab = "oggi"; syncFormDate(); render(); window.scrollTo(0, 0); }
