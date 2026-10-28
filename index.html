@@ -359,10 +359,8 @@ const Engine = (() => {
           const info = (state.orario.classi[classi[0]] || {})[dc + ora];
           const tipo = doc.ruolo === "sostegno" || (doc.ruoloOra && doc.ruoloOra[dc + ora] === "sostegno") ? "sostegno" : "lezione";
           needs.push({ date, ora, classi, classe: classi.join("+"), materia: tipo === "sostegno" ? "SOSTEGNO" : (info ? info.materia : doc.materie[0]), tipo, auto: true });
-        } else if (cell === "A") {
-          needs.push({ date, ora, classi: [], classe: "—", materia: "ALTERNATIVA IRC", tipo: "alternativa", auto: true });
         }
-        // DIS (a disposizione) e B (biblioteca): nessuna classe da coprire
+        // A (alternativa alla religione), DIS (a disposizione) e B (biblioteca): nessuna sostituzione da prevedere
       }
     }
     return needs;
@@ -600,7 +598,7 @@ function optList(need, currentSubs, selected, act, idx, diviso) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "28/10/2026 · 16";
+const BUILD = "28/10/2026 · 17";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -621,6 +619,9 @@ const closedOn = d => E.closedNote(state, d);
 function schoolStep(d, dir) { let x = E.addDays(d, dir); for (let i = 0; i < 400 && closedOn(x); i++) x = E.addDays(x, dir); return x; }
 function firstSchoolDay(d) { return closedOn(d) ? schoolStep(d, 1) : d; }
 function ensureCalendar() {
+  /* le ore di alternativa alla religione non prevedono sostituzione: tolte anche dalle sostituzioni già salvate */
+  const vecchie = state.sostituzioni.filter(x => !x.del && x.tipo === "alternativa");
+  if (vecchie.length) { vecchie.forEach(x => { x.del = true; touch(x); }); saveLocal(); scheduleSync(); }
   /* correzioni al calendario preimpostato (chiusure che la scuola non ha): tolte anche dai dati già salvati */
   const S = state.settings, ERRATE = [["2026-10-30", "2026-11-02", "Ponte di Ognissanti"], ["2027-02-11", "2027-02-13", "Giornate dello sport"], ["2027-05-31", "2027-06-01", "Ponte della Festa della Repubblica"]];
   const errata = c => ERRATE.some(([a, b, n]) => c.dal === a && c.al === b && c.nota === n);
@@ -1131,7 +1132,7 @@ function vImpostazioni() {
     <div class="scroll"><table class="t"><tr><th>Docente</th><th>Disponibile</th><th>Ore indicate</th><th></th></tr>${teachers().map(t => { const a = dis[t.k]; return `<tr><td>${esc(nice(t.k))}</td><td><input type="checkbox" data-act="dispon" data-id="${esc(t.k)}" ${a ? "checked" : ""}></td><td>${a ? (a.slot && a.slot.length ? esc(a.slot.map(s => DAYN[s.slice(0, 3)].slice(0, 3) + " " + s[3] + "ª").join(", ")) : "qualsiasi ora libera") + (a.dv ? " ⚠" : "") : ""}${a && a.nota ? `<div class="mut">${esc(a.nota)}</div>` : ""}</td><td>${a ? `<button class="b sm" data-act="dispedit" data-id="${esc(t.k)}">Modificare</button>` : ""}</td></tr>`; }).join("")}</table></div></details>`;
   }
   h += `<p class="mut" style="text-align:center;font-size:12px">Versione dell'app: ${BUILD}</p>`;
-  h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti già presenti nella classe (sostegno e compresenza)</li><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (senza anticipare l'ingresso)</li><li>Docenti a disposizione, poi docenti impegnati nell'alternativa alla religione (IRC)</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti con disponibilità a ore eccedenti</li><li>Scelta manuale: docenti con lezione quel giorno e liberi in quell'ora, più tutti i docenti di sostegno (anche se impegnati altrove)</li></ol><p class="mut">Se nessun sostituto è disponibile, è possibile segnare «Classe divisa».</p><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa del docente assente si coprono con gli stessi criteri.</p></div>`;
+  h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti già presenti nella classe (sostegno e compresenza)</li><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (senza anticipare l'ingresso)</li><li>Docenti a disposizione, poi docenti impegnati nell'alternativa alla religione (IRC)</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti con disponibilità a ore eccedenti</li><li>Scelta manuale: docenti con lezione quel giorno e liberi in quell'ora, più tutti i docenti di sostegno (anche se impegnati altrove)</li></ol><p class="mut">Se nessun sostituto è disponibile, è possibile segnare «Classe divisa».</p><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa alla religione del docente assente non prevedono sostituzione.</p></div>`;
   return h;
 }
 function vSyncBox() {
