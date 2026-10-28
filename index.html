@@ -14,7 +14,7 @@
  --board:#0E3C8C;--board2:#1C54AC;--chalk:#F2F6FF;--chalk2:#B9CBEC;
  --hl:#FFD84D;--hl-ink:#2E2500;--pen:#1F5FE0;--pen-bg:#E1EAFD;
  --ok:#16794C;--okbg:#E1F3EA;--bad:#C23B22;--badbg:#FCE9E5;--warn:#8A5A00;--warnbg:#FFF1CF;
- --t1:#16794C;--t2:#6A3FB5;--t3:#A15C00;--t4:#0E7490;--t0:#566786;
+ --t1:#16794C;--t2:#6A3FB5;--t3:#A15C00;--t4:#0E7490;--t0:#566786;--tdiv:#B3267A;
  --sans:"Source Serif 4","Iowan Old Style","Palatino Linotype",Georgia,serif;
  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
 }
@@ -23,13 +23,13 @@
  --board:#0A2158;--board2:#133576;--chalk:#EEF4FF;--chalk2:#9DB3DA;
  --hl:#FFD84D;--hl-ink:#2E2500;--pen:#8FB4FF;--pen-bg:#18294D;
  --ok:#5BD39B;--okbg:#12301F;--bad:#FF8F7A;--badbg:#3A1C17;--warn:#F2BF5C;--warnbg:#33270E;
- --t1:#5BD39B;--t2:#BD9CF2;--t3:#F2BF5C;--t4:#5ED0E8;--t0:#9DB0D0}}
+ --t1:#5BD39B;--t2:#BD9CF2;--t3:#F2BF5C;--t4:#5ED0E8;--t0:#9DB0D0;--tdiv:#FF8FC4}}
 :root[data-theme=dark]{color-scheme:dark;
  --bg:#0A1325;--surface:#121F38;--ink:#E6EEFB;--mut:#9DB0D0;--line:#22324F;--soft:#17274A;
  --board:#0A2158;--board2:#133576;--chalk:#EEF4FF;--chalk2:#9DB3DA;
  --hl:#FFD84D;--hl-ink:#2E2500;--pen:#8FB4FF;--pen-bg:#18294D;
  --ok:#5BD39B;--okbg:#12301F;--bad:#FF8F7A;--badbg:#3A1C17;--warn:#F2BF5C;--warnbg:#33270E;
- --t1:#5BD39B;--t2:#BD9CF2;--t3:#F2BF5C;--t4:#5ED0E8;--t0:#9DB0D0}
+ --t1:#5BD39B;--t2:#BD9CF2;--t3:#F2BF5C;--t4:#5ED0E8;--t0:#9DB0D0;--tdiv:#FF8FC4}
 :root[data-theme=light]{color-scheme:light}
 *{box-sizing:border-box}html,body{margin:0}
 body{font:17px/1.45 var(--sans);background:var(--bg);color:var(--ink);padding-bottom:84px;-webkit-text-size-adjust:100%}
@@ -266,6 +266,10 @@ header.top .calbtn{justify-self:start}
 .abl{margin:6px 0 4px;padding-left:20px}.abl li{margin:3px 0}
 .mc .mcs{display:block;font-weight:500;font-size:11px;opacity:.8;margin-top:1px}
 .dayh+.abg,.abg+.abg{margin-top:0}
+.tag.tdiv{color:var(--tdiv)}
+.opt.tdivopt{border-left-color:var(--tdiv)}
+.slot.div{border-color:color-mix(in srgb,var(--tdiv) 45%,var(--line))}
+.slot.div .cls{background:color-mix(in srgb,var(--tdiv) 16%,transparent);color:var(--tdiv)}
 </style>
 </head>
 <body>
@@ -558,7 +562,7 @@ function mergeState(l, r) { const o = { v: 1, orario: newest(l.orario, r.orario)
 const E = Engine;
 const teachers = () => state.orario ? Object.entries(state.orario.docenti).filter(([, d]) => d.ruolo !== "assistente").map(([k, d]) => ({ k, ...d })).sort((a, b) => a.k.localeCompare(b.k)) : [];
 /* modalità di una sostituzione (etichetta) e ore di assenza */
-const modTag = s => s.sostituto ? tierTag(s.tier, "", s.anticipo, kindOf(s)) : s.diviso ? '<span class="tag t0">Classe divisa</span>' : `<span class="uncov">${statoNoSub(s)}</span>`;
+const modTag = s => s.sostituto ? tierTag(s.tier, "", s.anticipo, kindOf(s)) : s.diviso ? '<span class="tag tdiv">Classe divisa</span>' : `<span class="uncov">${statoNoSub(s)}</span>`;
 const oreAss = a => !a ? "" : a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.map(o => o + "ª").join(", ");
 const isOpenSub = s => s.auto !== false && !s.sostituto && !s.diviso;
 /* tutti i docenti assenti in un giorno (anche senza ore da coprire), con le loro sostituzioni */
@@ -594,11 +598,11 @@ function optList(need, currentSubs, selected, act, idx, diviso) {
   if (man1.length) h += `<div class="grp">Scelta manuale · hanno lezione quel giorno e in quest'ora sono liberi</div><div class="mchips">` + man1.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0")}>${esc(nice(x.docente))}</button>`).join("") + `</div>`;
   if (man2.length) h += `<div class="grp">Docenti di sostegno · scelta manuale (anche se impegnati altrove)</div><div class="mchips">` + man2.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0|SOST")}>${esc(nice(x.docente))}<small class="mcs">${esc(x.dove)}</small></button>`).join("") + `</div>`;
   const canDiv = !!(need.classi && need.classi.length);
-  return h + `<button type="button" class="opt none ${!selected && !diviso ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>l'ora resta scoperta</small></span></button>` + (canDiv ? `<button type="button" class="opt none ${diviso ? "sel" : ""}" ${attr("DIV")}><span class="mk"></span><span><b>Classe divisa</b><small>nessun sostituto: gli alunni vengono distribuiti nelle altre classi</small></span></button>` : "") + `</div>`;
+  return h + `<button type="button" class="opt none ${!selected && !diviso ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>l'ora resta scoperta</small></span></button>` + (canDiv ? `<button type="button" class="opt tdivopt ${diviso ? "sel" : ""}" ${attr("DIV")}><span class="mk"></span><span><b>Classe divisa</b><small>nessun sostituto: gli alunni vengono distribuiti nelle altre classi</small></span></button>` : "") + `</div>`;
 }
 
 /* ============ rendering ============ */
-const BUILD = "28/10/2026 · 17";
+const BUILD = "28/10/2026 · 18";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -716,8 +720,8 @@ function vOggi() {
         h += `<div class="hour"><div class="ruler"><b>${n}ª</b><small>${esc(oraLabel(n).replace("–", "–​"))}</small></div><div class="slots">`;
         for (const s of x.rows.filter(r => r.ora === n)) {
           const none = s.classe === "—", open = isOpenSub(s);
-          const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo, kindOf(s))}` : s.diviso ? `<span class="tag t0">Classe divisa</span>` : s.nosub ? `<span class="nosub">Sostegno non sostituito</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
-          h += `<div class="slot ${open ? "open" : ""}"><div class="cls ${none ? "na" : s.classe.length > 3 ? "sm" : ""}">${none ? "IRC" : esc(s.classe)}</div>
+          const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo, kindOf(s))}` : s.diviso ? `<span class="tag tdiv">Classe divisa</span>` : s.nosub ? `<span class="nosub">Sostegno non sostituito</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
+          h += `<div class="slot ${open ? "open" : ""} ${s.diviso && !s.sostituto ? "div" : ""}"><div class="cls ${none ? "na" : s.classe.length > 3 ? "sm" : ""}">${none ? "IRC" : esc(s.classe)}</div>
       <div class="who"><div class="l1">${who}</div><div class="l2">${esc(nice(s.materia))}</div></div>
       <div class="act">${s.sostituto ? `<label class="chk"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}>sul registro</label>` : "<span></span>"}<button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div></div>`;
         }
