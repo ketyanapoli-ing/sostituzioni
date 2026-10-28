@@ -260,6 +260,12 @@ nav.tabs button{font-size:12px}.tag{font-size:12px}
 .cd.sel i{background:var(--hl)}
 header.top .calbtn{justify-self:start}
 .hero-date{cursor:pointer}
+.abg{margin:0 0 16px}
+.abh{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:8px 12px;margin:0 0 8px;border-radius:12px;background:var(--soft);font-size:14px}
+.abh b{font:700 17px/1.2 var(--serif)}
+.abl{margin:6px 0 4px;padding-left:20px}.abl li{margin:3px 0}
+.mc .mcs{display:block;font-weight:500;font-size:11px;opacity:.8;margin-top:1px}
+.dayh+.abg,.abg+.abg{margin-top:0}
 </style>
 </head>
 <body>
@@ -458,15 +464,23 @@ const Engine = (() => {
     return out;
   }
 
-  /* scelta manuale: docenti che quel giorno hanno lezione ma in quell'ora non sono impegnati in altre classi */
+  const isSostegnoDoc = d => d.ruolo === "sostegno" || (d.ruoloOra && Object.values(d.ruoloOra).includes("sostegno"));
+  /* scelta manuale: docenti che quel giorno hanno lezione ma in quell'ora non sono impegnati in altre classi;
+     in più TUTTI i docenti di sostegno (anche se impegnati in classe o non a scuola quel giorno), con l'indicazione di dove sono */
   function manualCandidates(state, need, ctx, excludeNames) {
     const dc = dayCode(need.date), slot = dc + need.ora, out = [];
     for (const [name, d] of Object.entries(state.orario.docenti)) {
       if (!isRealTeacher(d) || name === need.docenteAssente || excludeNames.has(name)) continue;
       if (isAbsent(ctx.absMap, name, need.ora)) continue;
       if (ctx.subs.some(s => !s.del && s.sostituto === name && s.data === need.date && s.ora === need.ora)) continue;
-      if (!presentOn(d, dc)) continue;
       const cell = d.orario[slot];
+      if (isSostegnoDoc(d)) {
+        const cl = classesOf(cell);
+        const dove = cell === "DIS" ? "a disposizione" : cell === "A" ? "in alternativa" : cell === "B" ? "in biblioteca" : cl ? "in classe " + cl.join("+") : presentOn(d, dc) ? "libero in quest'ora" : "non a scuola quel giorno";
+        out.push({ docente: name, sost: true, dove, motivo: "sostegno · " + dove, nMonth: countFor(ctx.subs, name, need.date, "month") });
+        continue;
+      }
+      if (!presentOn(d, dc)) continue;
       if (cell && cell !== "DIS" && cell !== "A") continue; // impegnato in una classe (o in biblioteca)
       out.push({ docente: name, motivo: cell === "DIS" ? "a disposizione (oltre il limite giornaliero)" : cell === "A" ? "alternativa (oltre il limite giornaliero)" : "libero in quest'ora", nMonth: countFor(ctx.subs, name, need.date, "month") });
     }
@@ -513,7 +527,8 @@ const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("it-IT", { wee
 const fmtDateLong = d => new Date(d + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 const fmtShort = d => new Date(d + "T12:00:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
 const DAYN = { LUN: "Lunedì", MAR: "Martedì", MER: "Mercoledì", GIO: "Giovedì", VEN: "Venerdì" };
-const MOTIVI = ["Malattia", "Permesso", "Permesso breve", "Formazione", "Uscita didattica", "Altro"];
+const MOTIVI = ["Malattia", "L. 104", "Permesso", "Permesso breve", "Formazione", "Uscita didattica", "Altro"];
+const MOTIVI_PARZ = ["Permesso breve", "Altro"]; /* motivi possibili se l'assenza riguarda solo alcune ore */
 const TIERNAME = { 0: "Manuale", 1: "A disposizione / alternativa", 2: "Sostegno in classe", 3: "Recupero", 4: "Ore eccedenti" };
 
 /* ============ stato ============ */
@@ -542,17 +557,28 @@ function mergeState(l, r) { const o = { v: 1, orario: newest(l.orario, r.orario)
 /* ============ utilità dominio ============ */
 const E = Engine;
 const teachers = () => state.orario ? Object.entries(state.orario.docenti).filter(([, d]) => d.ruolo !== "assistente").map(([k, d]) => ({ k, ...d })).sort((a, b) => a.k.localeCompare(b.k)) : [];
+/* modalità di una sostituzione (etichetta) e ore di assenza */
+const modTag = s => s.sostituto ? tierTag(s.tier, "", s.anticipo, kindOf(s)) : s.diviso ? '<span class="tag t0">Classe divisa</span>' : `<span class="uncov">${statoNoSub(s)}</span>`;
+const oreAss = a => !a ? "" : a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.map(o => o + "ª").join(", ");
+const isOpenSub = s => s.auto !== false && !s.sostituto && !s.diviso;
+/* tutti i docenti assenti in un giorno (anche senza ore da coprire), con le loro sostituzioni */
+function assentiDelGiorno(d) {
+  const day = subs().filter(s => s.data === d), m = new Map();
+  if (E.dayCode(d) && !closedOn(d)) E.activeAbs(state).forEach(a => { if (d >= a.dal && d <= (a.al || a.dal) && !m.has(a.docente)) m.set(a.docente, { docente: a.docente, a }); });
+  day.forEach(s => { if (!m.has(s.assente)) m.set(s.assente, { docente: s.assente, a: state.assenze.find(x => x.id === s.assenzaId && !x.del) || null }); });
+  return [...m.values()].sort((x, y) => x.docente.localeCompare(y.docente)).map(x => ({ ...x, rows: day.filter(s => s.assente === x.docente).sort((a, b) => a.ora - b.ora || a.classe.localeCompare(b.classe)) }));
+}
 const oraLabel = n => { const o = state.settings.ore[n - 1]; return o ? `${o[0]}–${o[1]}` : ""; };
 const subs = () => E.activeSub(state);
-function kindOf(s) { if (s.tier !== 1) return null; if (s.kind) return s.kind; const d = state.orario && state.orario.docenti[s.sostituto]; const c = d && d.orario[E.dayCode(s.data) + s.ora]; return c === "DIS" || c === "A" ? c : null; }
-function tierTag(t, extra, ant, kind) { const nm = t === 1 && kind === "A" ? "In alternativa (IRC)" : t === 1 && kind === "DIS" ? "A disposizione" : TIERNAME[t || 0]; return `<span class="tag t${t || 0}">${esc(nm)}${ant ? " in anticipo · da concordare" : ""}${extra ? " · " + esc(extra) : ""}</span>`; }
+function kindOf(s) { if (s.kind) return s.kind; if (s.tier !== 1) return null; const d = state.orario && state.orario.docenti[s.sostituto]; const c = d && d.orario[E.dayCode(s.data) + s.ora]; return c === "DIS" || c === "A" ? c : null; }
+function tierTag(t, extra, ant, kind) { const nm = t === 1 && kind === "A" ? "In alternativa (IRC)" : t === 1 && kind === "DIS" ? "A disposizione" : !t && kind === "SOST" ? "Sostegno · scelta manuale" : TIERNAME[t || 0]; return `<span class="tag t${t || 0}">${esc(nm)}${ant ? " in anticipo · da concordare" : ""}${extra ? " · " + esc(extra) : ""}</span>`; }
 function usedRecuperi(name) { return subs().filter(s => s.sostituto === name && s.tier === 3).length; }
 function toast(m) { let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1d2433;color:#fff;padding:9px 16px;border-radius:99px;z-index:20;font-size:14px;max-width:90vw"; document.body.appendChild(t); } t.textContent = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", 3200); }
 function needFor(s) { return { date: s.data, ora: s.ora, classi: s.classi || [], materia: s.materia, tipo: s.tipo, docenteAssente: s.assente }; }
 
 /* elenco visibile dei sostituti, a gruppi nell'ordine di priorità; l'ultimo gruppo è la scelta manuale */
 const GRUPPI = [["in classe", "Già in classe (sostegno e compresenza)", c => c.tier === 2], ["rec", "Devono recuperare un'ora", c => c.tier === 3 && !c.anticipo], ["disp", "A disposizione", c => c.tier === 1 && c.kind !== "A"], ["alt", "In alternativa alla religione (IRC)", c => c.tier === 1 && c.kind === "A"], ["ant", "Recupero in anticipo · da concordare con il docente", c => c.tier === 3 && c.anticipo], ["ecc", "Ore eccedenti", c => c.tier === 4]];
-function optList(need, currentSubs, selected, act, idx) {
+function optList(need, currentSubs, selected, act, idx, diviso) {
   const ctx = { subs: currentSubs, absMap: E.absentSlots(state, need.date, null) };
   const c = need.tipo === "altro" ? [] : E.candidates(state, need, ctx);
   const man = E.manualCandidates(state, need, ctx, new Set(c.map(x => x.docente)));
@@ -564,12 +590,15 @@ function optList(need, currentSubs, selected, act, idx) {
   });
   if (selected && !c.some(x => x.docente === selected) && !man.some(x => x.docente === selected))
     h += `<div class="grp">Scelta attuale</div><button type="button" class="opt sel" ${attr(selected + "|0|0")}><span class="mk"></span><span><b>${esc(nice(selected))}</b></span></button>`;
-  if (man.length) h += `<div class="grp">Scelta manuale · hanno lezione quel giorno e in quest'ora sono liberi</div><div class="mchips">` + man.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0")}>${esc(nice(x.docente))}</button>`).join("") + `</div>`;
-  return h + `<button type="button" class="opt none ${!selected ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>l'ora resta scoperta</small></span></button></div>`;
+  const man1 = man.filter(x => !x.sost), man2 = man.filter(x => x.sost);
+  if (man1.length) h += `<div class="grp">Scelta manuale · hanno lezione quel giorno e in quest'ora sono liberi</div><div class="mchips">` + man1.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0")}>${esc(nice(x.docente))}</button>`).join("") + `</div>`;
+  if (man2.length) h += `<div class="grp">Docenti di sostegno · scelta manuale (anche se impegnati altrove)</div><div class="mchips">` + man2.map(x => `<button type="button" class="mc ${selected === x.docente ? "sel" : ""}" title="${esc(x.motivo)}" ${attr(x.docente + "|0|0|SOST")}>${esc(nice(x.docente))}<small class="mcs">${esc(x.dove)}</small></button>`).join("") + `</div>`;
+  const canDiv = !!(need.classi && need.classi.length);
+  return h + `<button type="button" class="opt none ${!selected && !diviso ? "sel" : ""}" style="margin-top:10px" ${attr("")}><span class="mk"></span><span><b>Nessuno</b><small>l'ora resta scoperta</small></span></button>` + (canDiv ? `<button type="button" class="opt none ${diviso ? "sel" : ""}" ${attr("DIV")}><span class="mk"></span><span><b>Classe divisa</b><small>nessun sostituto: gli alunni vengono distribuiti nelle altre classi</small></span></button>` : "") + `</div>`;
 }
 
 /* ============ rendering ============ */
-const BUILD = "27/10/2026 · 11";
+const BUILD = "28/10/2026 · 13";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -632,8 +661,8 @@ function renderTop() {
   if (ui.tab === "oggi" && state.orario && closedOn(d)) {
     b = `<div class="hero-row"><span class="stat">${esc(closedOn(d))}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>`;
   } else if (ui.tab === "oggi" && state.orario) {
-    const day = subs().filter(x => x.data === d), real = day.filter(x => x.auto !== false), cov = real.filter(x => x.sostituto).length, unc = real.length - cov, assenti = [...new Set(day.map(x => x.assente))].sort();
-    b = `<div class="hero-row"><span class="stat"><b>${cov}</b> ${cov === 1 ? "coperta" : "coperte"}</span><span class="stat ${unc ? "bad" : ""}"><b>${unc}</b> ${unc === 1 ? "scoperta" : "scoperte"}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>${assenti.length ? `<p class="absent-line">Assenti: <b>${assenti.map(a => esc(nice(a)) + (day.filter(x => x.assente === a).every(x => x.nosub) ? " (sostegno non sostituito)" : "")).join(", ")}</b></p>` : ""}`;
+    const day = subs().filter(x => x.data === d), real = day.filter(x => x.auto !== false), cov = real.filter(x => x.sostituto || x.diviso).length, unc = real.length - cov, assenti = assentiDelGiorno(d);
+    b = `<div class="hero-row"><span class="stat"><b>${cov}</b> ${cov === 1 ? "coperta" : "coperte"}</span><span class="stat ${unc ? "bad" : ""}"><b>${unc}</b> ${unc === 1 ? "scoperta" : "scoperte"}</span>${d === todayStr() ? "" : '<button class="link" data-act="daytoday">Oggi</button>'}<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button></div>${assenti.length ? `<p class="absent-line">Assenti: <b>${assenti.map(x => esc(nice(x.docente)) + (x.rows.length && x.rows.every(y => y.nosub) ? " (sostegno non sostituito)" : "")).join(", ")}</b></p>` : ""}`;
   } else b = `<div class="hero-row"><h1 class="tab-title">${esc(TABTITLE[ui.tab])}</h1>${ui.tab === "assenze" || !state.orario ? "" : `<button class="b hl sm" data-act="newabs" data-date="${d}">+ Assenza</button>`}</div>`;
   $("#band").innerHTML = b;
 }
@@ -656,35 +685,42 @@ function needsData() { return `<div class="card"><h2>Benvenuto</h2><p>Per inizia
 function vOggi() {
   if (!state.orario) return needsData();
   const d = ui.date, day = subs().filter(s => s.data === d), wk = E.dayCode(d), isToday = d === todayStr();
-  const real = day.filter(s => s.auto !== false), cov = real.filter(s => s.sostituto).length, unc = real.length - cov;
+  const real = day.filter(s => s.auto !== false), cov = real.filter(s => s.sostituto || s.diviso).length, unc = real.length - cov;
   const dt = new Date(d + "T12:00:00"), wd = dt.toLocaleDateString("it-IT", { weekday: "long" }), dm = dt.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
   const assenti = [...new Set(day.map(s => s.assente))].sort();
   let h = "";
-  const evs = eventiDelGiorno(d);
-  if (evs.length) h += `<div class="card"><h3>Promemoria</h3>${evs.map(e => `<div class="sub"><div class="h">${esc(e.ora || "")}</div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div></div>`).join("")}</div>`;
+  const ass = assentiDelGiorno(d);
+  const evs = eventiDelGiorno(d).filter(e => !(e.auto && e.ref && state.assenze.some(a => a.id === e.ref && !a.del)));
+  if (evs.length || ass.length) h += `<div class="card"><h3>Promemoria</h3>${ass.length ? `<div class="mp"><b>Docenti assenti (${ass.length})</b><ul class="abl">${ass.map(x => `<li><b>${esc(nice(x.docente))}</b><span class="mut"> · ${esc(oreAss(x.a))}${x.a && x.a.motivo ? " · " + esc(x.a.motivo) : ""}${x.a && x.a.nota ? " · " + esc(x.a.nota) : ""}</span></li>`).join("")}</ul></div>` : ""}${evs.map(e => `<div class="sub"><div class="h">${esc(e.ora || "")}</div><div class="m"><b>${esc(e.titolo)}</b><div class="mut">${esc(e.nota || "")}</div></div></div>`).join("")}</div>`;
   const nsAbs = [...new Set(day.filter(x => x.nosub).map(x => x.assente))];
   if (nsAbs.length) h += `<div class="ok-note"><b>Sostegno non sostituito:</b> ${nsAbs.map(a => `${esc(nice(a))} (${day.filter(x => x.assente === a && x.nosub).length} ${day.filter(x => x.assente === a && x.nosub).length === 1 ? "ora" : "ore"})`).join(", ")}. L'assenza è solo registrata: nessuna sostituzione prevista.</div>`;
-  h += recAlert() + pendAlert() + calBox(d);
+  h += confAlert(d) + recAlert() + pendAlert() + calBox(d);
   const cn = closedOn(d);
   const multi = E.activeAbs(state).filter(a => a.al && a.al !== a.dal && d >= a.dal && d <= a.al);
   if (multi.length) h += `<div class="card">${multi.map(a => { const days = E.datesBetween(a.dal, a.al).filter(x => !closedOn(x)); return `<div class="mp"><b>${esc(nice(a.docente))}</b> · assente dal ${esc(fmtDate(a.dal))} al ${esc(fmtDate(a.al))}<div class="chips" style="margin-top:6px">${days.map(x => `<span class="chip sm ${x === d ? "on" : ""}" data-act="gotoday" data-date="${x}">${esc(fmtDate(x))}</span>`).join("")}</div></div>`; }).join("")}</div>`;
   if (cn) h += `<div class="card empty"><b>${esc(cn)}</b>${wk ? "Scuola chiusa: nessuna lezione e nessuna sostituzione da fare." : "Nel fine settimana non ci sono lezioni."}</div>`;
   else if (!day.length) h += `<div class="card empty"><b>Nessuna assenza</b>Per questa data non c'è niente da coprire. Per registrare un'assenza usare «+ Assenza».</div>`;
   if (unc) h += `<div class="note bad"><b>${unc} ${unc === 1 ? "ora" : "ore"} senza sostituto.</b> Per sceglierlo a mano, usare «Cambiare» sulle righe rosse.</div>`;
-  h += '<div class="hourgrid">';
-  for (let n = 1; n <= 7; n++) {
-    const rows = day.filter(s => s.ora === n).sort((a, b) => a.classe.localeCompare(b.classe)); if (!rows.length) continue;
-    h += `<div class="hour"><div class="ruler"><b>${n}ª</b><small>${esc(oraLabel(n).replace("–", "–​"))}</small></div><div class="slots">`;
-    for (const s of rows) {
-      const none = s.classe === "—", open = s.auto !== false && !s.sostituto;
-      const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo, kindOf(s))}` : s.nosub ? `<span class="nosub">Sostegno non sostituito</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
-      h += `<div class="slot ${open ? "open" : ""}"><div class="cls ${none ? "na" : s.classe.length > 3 ? "sm" : ""}">${none ? "IRC" : esc(s.classe)}</div>
-      <div class="who"><div class="l1">${who}</div><div class="l2">${esc(nice(s.materia))}, ${esc(nice(s.assente))} assente</div></div>
-      <div class="act">${s.sostituto ? `<label class="chk"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}>sul registro</label>` : ""}<button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div></div>`;
+  for (const x of ass) {
+    h += `<section class="abg"><header class="abh"><b>${esc(nice(x.docente))}</b><span class="mut">${esc(oreAss(x.a))}${x.a && x.a.motivo ? " · " + esc(x.a.motivo) : ""}</span></header>`;
+    if (!x.rows.length) h += `<p class="mut" style="margin:2px 4px 6px">Nessuna ora da coprire.</p>`;
+    else {
+      h += '<div class="hourgrid">';
+      for (const n of [...new Set(x.rows.map(r => r.ora))]) {
+        h += `<div class="hour"><div class="ruler"><b>${n}ª</b><small>${esc(oraLabel(n).replace("–", "–​"))}</small></div><div class="slots">`;
+        for (const s of x.rows.filter(r => r.ora === n)) {
+          const none = s.classe === "—", open = isOpenSub(s);
+          const who = s.sostituto ? `<b>${esc(nice(s.sostituto))}</b>${tierTag(s.tier, "", s.anticipo, kindOf(s))}` : s.diviso ? `<span class="tag t0">Classe divisa</span>` : s.nosub ? `<span class="nosub">Sostegno non sostituito</span>` : open ? (s.pending ? `<span class="pend">Da assegnare</span>` : `<span class="uncov">Scoperta</span>`) : `<span class="mut">da gestire a mano</span>`;
+          h += `<div class="slot ${open ? "open" : ""}"><div class="cls ${none ? "na" : s.classe.length > 3 ? "sm" : ""}">${none ? "IRC" : esc(s.classe)}</div>
+      <div class="who"><div class="l1">${who}</div><div class="l2">${esc(nice(s.materia))}</div></div>
+      <div class="act">${s.sostituto ? `<label class="chk"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}>sul registro</label>` : "<span></span>"}<button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div></div>`;
+        }
+        h += `</div></div>`;
+      }
+      h += '</div>';
     }
-    h += `</div></div>`;
+    h += `</section>`;
   }
-  h += '</div>';
   return h;
 }
 
@@ -748,6 +784,13 @@ function permessiStato() {
   for (const x of sb) { const it = items.find(i => i.p.docente === x.sostituto && i.res > 0 && i.p.data <= x.data && x.data <= i.scad); if (it) { it.res--; it.auto++; } }
   items.forEach(i => i.days = daysTo(i.scad));
   return items;
+}
+/* sostituti che risultano assenti nella stessa ora */
+function confAlert(d) {
+  const map = E.absentSlots(state, d, null);
+  const L = subs().filter(s => s.data === d && s.sostituto && (map[s.sostituto] === "ALL" || (map[s.sostituto] && map[s.sostituto].has(s.ora)))).sort((a, b) => a.ora - b.ora);
+  if (!L.length) return "";
+  return `<div class="note bad"><b>Attenzione: ${L.length === 1 ? "un sostituto è assente" : L.length + " sostituti sono assenti"}.</b>${L.map(s => `<div class="pr"><span><b>${esc(nice(s.sostituto))}</b> è assente ma è indicato come sostituto di ${esc(nice(s.assente))} alla ${s.ora}ª ora (classe ${esc(s.classe)})</span><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</div>`;
 }
 function pendAlert() {
   const by = {}; subs().filter(s => s.pending && !s.sostituto && s.auto !== false).forEach(s => (by[s.assenzaId] = by[s.assenzaId] || []).push(s));
@@ -840,8 +883,8 @@ function oreChips(dr) {
   if (ov) h += `<div class="note bad">Permesso breve: massimo <b>${ov.max} ${ov.max === 1 ? "ora" : "ore"}</b> su ${ov.tot} (alternativa esclusa). Occorre togliere ${ov.eccesso} ${ov.eccesso === 1 ? "ora" : "ore"} per continuare.</div>`;
   return h;
 }
-function normMotivo(dr) { const ok = dr.tutto ? MOTIVI.filter(m => m !== "Permesso breve") : ["Permesso breve"]; if (!ok.includes(dr.motivo)) dr.motivo = ok[0]; return ok; }
-function motBox(dr) { const ok = normMotivo(dr); return `<label class="f">Motivo</label><select id="f_mot" data-act="formchg">${ok.map(m => `<option ${dr.motivo === m ? "selected" : ""}>${m}</option>`).join("")}</select>${dr.tutto ? "" : '<p class="mut" style="margin:4px 0 0">Per poche ore il motivo può essere solo «Permesso breve».</p>'}`; }
+function normMotivo(dr) { const ok = dr.tutto ? MOTIVI.filter(m => m !== "Permesso breve") : MOTIVI_PARZ; if (!ok.includes(dr.motivo)) dr.motivo = ok[0]; return ok; }
+function motBox(dr) { const ok = normMotivo(dr); return `<label class="f">Motivo</label><select id="f_mot" data-act="formchg">${ok.map(m => `<option ${dr.motivo === m ? "selected" : ""}>${m}</option>`).join("")}</select>${dr.tutto ? "" : '<p class="mut" style="margin:4px 0 0">Per poche ore: «Permesso breve» (con limite di ore e recupero) oppure «Altro» (da specificare nella nota).</p>'}`; }
 function chiusiBox(dr) {
   if (!dr.dal) return "";
   const L = E.datesBetween(dr.dal, dr.al && dr.al >= dr.dal ? dr.al : dr.dal).filter(x => E.dayCode(x) && closedOn(x));
@@ -863,9 +906,9 @@ function vAssenze() {
   if (ui.draft) h += vDraft();
   const abs = E.activeAbs(state).sort((a, b) => b.dal.localeCompare(a.dal)).slice(0, 40);
   h += `<div class="card"><h3>Assenze registrate</h3>${abs.length ? abs.map(a => {
-    const n = subs().filter(s => s.assenzaId === a.id).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora), u = n.filter(s => s.auto !== false && !s.sostituto), pend = u.some(s => s.pending);
-    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.some(s => s.nosub) && !n.some(s => !s.nosub) ? `<span class="nosub">sostegno non sostituito (${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : (c => `${c} ${c === 1 ? "sostituzione" : "sostituzioni"}`)(n.filter(s => s.sostituto).length)}${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definire" : "Riproporre"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
-    ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · da correggere</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo, kindOf(s)) : s.nosub ? "Sostegno non sostituito" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</details>` : ""}</div>`;
+    const n = subs().filter(s => s.assenzaId === a.id).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora), u = n.filter(isOpenSub), pend = u.some(s => s.pending);
+    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.some(s => s.nosub) && !n.some(s => !s.nosub) ? `<span class="nosub">sostegno non sostituito (${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : (c => `${c} ${c === 1 ? "sostituzione" : "sostituzioni"}`)(n.filter(s => s.sostituto).length)}${n.some(s => s.diviso) ? ` · classe divisa (${n.filter(s => s.diviso).length})` : ""}${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definire" : "Riproporre"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
+    ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · da correggere</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo, kindOf(s)) : s.diviso ? "Classe divisa" : s.nosub ? "Sostegno non sostituito" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</details>` : ""}</div>`;
   }).join("") : '<span class="mut">Nessuna assenza.</span>'}</div>`;
   h += vRecGest();
   return h;
@@ -873,7 +916,7 @@ function vAssenze() {
 function vDraft() {
   const dd = ui.draft, rows = dd.rows;
   if (!rows.length) return `<div class="card"><div class="note">Il docente non ha ore di lezione in quel periodo: nessuna sostituzione necessaria.</div><button class="b pri" data-act="savedraft">Salvare comunque l'assenza</button> <button class="b" data-act="canceldraft">Annullare</button></div>`;
-  const unc = rows.filter(r => r.auto && !r.sostituto).length, nNo = rows.filter(r => r.nosub).length;
+  const unc = rows.filter(r => r.auto && !r.sostituto && !r.diviso).length, nNo = rows.filter(r => r.nosub).length;
   let h = `<div class="card" id="draftcard"><h2>${dd.existing ? "Definisci le sostituzioni" : "Proposta di sostituzione"}</h2><p class="mut">${esc(nice(dd.assenza.docente))} · ${rows.length - nNo} ${rows.length - nNo === 1 ? "ora" : "ore"} da coprire. Toccare il sostituto preferito per ogni ora, poi salvare.</p>${unc ? `<div class="note">${unc} ${unc === 1 ? "ora" : "ore"} senza candidati nelle quattro fasce: scegliere un docente a mano o salvare come scoperta.</div>` : '<div class="ok-note">Tutte le ore hanno un sostituto proposto.</div>'}`;
   if (dd.permessi && dd.permessi.length) h += dd.permessi.map(p => `<div class="note ${p.eccesso || !p.rec ? "bad" : ""}"><b>${esc(fmtDate(p.data))}</b>: permesso breve, massimo ${p.max} ${p.max === 1 ? "ora" : "ore"} su ${p.tot} (alternativa esclusa). ${p.rec ? `<b>${p.rec} ${p.rec === 1 ? "ora" : "ore"} da recuperare</b> entro il ${esc(fmtDateLong(addMonths(p.data, 2)))}.` : "Nessuna ora recuperabile."}${p.eccesso ? ` Scelte ${p.count} ore: ${p.eccesso === 1 ? "1 ora oltre la metà non rientra" : p.eccesso + " ore oltre la metà non rientrano"} nel permesso breve.` : ""}</div>`).join("");
   if (nNo) h += `<div class="ok-note">${nNo} ${nNo === 1 ? "ora di sostegno resta" : "ore di sostegno restano"} senza sostituzione: l'assenza viene comunque registrata.</div>`;
@@ -883,7 +926,7 @@ function vDraft() {
     if (r.data !== last) { h += `<div class="mut" style="margin-top:8px"><b>${esc(fmtDateLong(r.data))}</b></div>`; last = r.data; }
     const others = subs().filter(s => s.assenzaId !== dd.assenza.id).concat(rows.filter((x, j) => j !== i && x.sostituto).map(x => ({ sostituto: x.sostituto, data: x.data, ora: x.ora, tier: x.tier })));
     h += `<div class="sub"><div class="h">${r.ora}ª<small>${esc(oraLabel(r.ora))}</small></div><div class="m"><div>${r.classe !== "—" ? "Classe <b>" + esc(r.classe) + "</b> · " : ""}${esc(nice(r.materia))}</div>
-    ${optList({ date: r.data, ora: r.ora, classi: r.classi, materia: r.materia, tipo: r.tipo, docenteAssente: dd.assenza.docente }, others, r.sostituto, "draftpick", i)}</div></div>`;
+    ${optList({ date: r.data, ora: r.ora, classi: r.classi, materia: r.materia, tipo: r.tipo, docenteAssente: dd.assenza.docente }, others, r.sostituto, "draftpick", i, r.diviso)}</div></div>`;
   });
   h += `<div class="row" style="margin-top:12px"><button class="b pri" data-act="savedraft">Confermare e salvare</button>${dd.existing ? "" : '<button class="b" data-act="savelater">Salvare, sostituzioni dopo</button>'}<button class="b" data-act="canceldraft">Annullare</button></div></div>`;
   return h;
@@ -901,25 +944,35 @@ const MESI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ot
 function annoScolasticoMesi() { const dt = new Date(ui.regDate + "T12:00:00"), y = dt.getMonth() >= 8 ? dt.getFullYear() : dt.getFullYear() - 1; return [8, 9, 10, 11, 0, 1, 2, 3, 4, 5].map(m => (m >= 8 ? y : y + 1) + "-" + String(m + 1).padStart(2, "0")); }
 const meseLabel = k => MESI[+k.slice(5) - 1] + " " + k.slice(0, 4);
 function regRows() {
-  if (ui.regMode === "mesi") { const ms = (ui.regMonths || []).slice().sort(), set = new Set(ms); return { a: ms[0] ? ms[0] + "-01" : "", b: ms.length ? ms[ms.length - 1] + "-31" : "", label: ms.length ? ms.map(meseLabel).join(", ") : "nessun mese scelto", rows: subs().filter(s => set.has(s.data.slice(0, 7))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
-  const [a, b] = rangeOf(ui.regMode, ui.regDate); return { a, b, label: `dal ${fmtShort(a)} al ${fmtShort(b)}`, rows: subs().filter(s => s.data >= a && s.data <= b).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
-const statoNoSub = s => s.nosub ? "non sostituita (sostegno)" : s.auto === false ? "da gestire a mano" : s.pending ? "da assegnare" : "scoperta";
+  if (ui.regMode === "mesi") { const ms = (ui.regMonths || []).slice().sort(), set = new Set(ms); return { a: ms[0] ? ms[0] + "-01" : "", b: ms.length ? ms[ms.length - 1] + "-31" : "", label: ms.length ? ms.map(meseLabel).join(", ") : "nessun mese scelto", rows: subs().filter(s => set.has(s.data.slice(0, 7))).sort((x, y) => x.data.localeCompare(y.data) || x.assente.localeCompare(y.assente) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
+  const [a, b] = rangeOf(ui.regMode, ui.regDate); return { a, b, label: `dal ${fmtShort(a)} al ${fmtShort(b)}`, rows: subs().filter(s => s.data >= a && s.data <= b).sort((x, y) => x.data.localeCompare(y.data) || x.assente.localeCompare(y.assente) || x.ora - y.ora || x.classe.localeCompare(y.classe)) }; }
+const statoNoSub = s => s.diviso ? "classe divisa" : s.nosub ? "non sostituita (sostegno)" : s.auto === false ? "da gestire a mano" : s.pending ? "da assegnare" : "scoperta";
 /* assenze registrate che toccano il periodo del report (anche senza ore da coprire) */
 function regAbs() {
   const { a, b } = regRows(), ms = ui.regMode === "mesi" ? new Set(ui.regMonths || []) : null;
   return E.activeAbs(state).filter(x => { const to = x.al || x.dal; if (ms) return E.datesBetween(x.dal, to).some(d => ms.has(d.slice(0, 7))); return x.dal <= b && to >= a; }).sort((x, y) => x.dal.localeCompare(y.dal) || x.docente.localeCompare(y.docente));
 }
-function absStat(a) { const n = subs().filter(s => s.assenzaId === a.id); return { tot: n.length, sost: n.filter(s => s.sostituto).length }; }
-const tipoReg = (t, k) => t === 1 && k === "A" ? "alternativa IRC" : t === 1 && k === "DIS" ? "a disposizione" : ({ 1: "a disp. / alt. IRC", 2: "sostegno", 3: "recupero", 4: "ore eccedenti", 0: "altro" }[t || 0]);
+function absStat(a) { const n = subs().filter(s => s.assenzaId === a.id); return { tot: n.length, sost: n.filter(s => s.sostituto).length, div: n.filter(s => s.diviso && !s.sostituto).length }; }
+/* giorni del periodo con TUTTI i docenti assenti (anche senza ore da coprire) e le loro ore */
+function regGiorni() {
+  const { rows } = regRows(), ms = ui.regMode === "mesi" ? new Set(ui.regMonths || []) : null, rg = ms ? null : rangeOf(ui.regMode, ui.regDate);
+  const inP = x => ms ? ms.has(x.slice(0, 7)) : x >= rg[0] && x <= rg[1];
+  const days = {}, get = (dt, doc) => { const D = days[dt] = days[dt] || {}; return D[doc] = D[doc] || { docente: doc, a: null, rows: [] }; };
+  E.activeAbs(state).forEach(a => E.datesBetween(a.dal, a.al || a.dal).forEach(x => { if (E.dayCode(x) && !closedOn(x) && inP(x)) { const g = get(x, a.docente); g.a = g.a || a; } }));
+  rows.forEach(s => { const g = get(s.data, s.assente); g.rows.push(s); if (!g.a) g.a = state.assenze.find(x => x.id === s.assenzaId) || null; });
+  return Object.keys(days).sort().map(dt => ({ data: dt, docs: Object.values(days[dt]).sort((x, y) => x.docente.localeCompare(y.docente)).map(x => ({ ...x, rows: x.rows.sort((p, q) => p.ora - q.ora || p.classe.localeCompare(q.classe)) })) }));
+}
+const tipoReg = (t, k) => !t && k === "SOST" ? "sostegno, scelta manuale" : t === 1 && k === "A" ? "alternativa IRC" : t === 1 && k === "DIS" ? "a disposizione" : ({ 1: "a disp. / alt. IRC", 2: "sostegno", 3: "recupero", 4: "ore eccedenti", 0: "altro" }[t || 0]);
 function vRegistro() {
   if (!state.orario) return needsData();
   const { label, rows } = regRows(), subbed = rows.filter(s => s.sostituto), ab = regAbs();
   const tr = rows.filter(s => s.firmata).length;
   let h = vRecuperi() + `<div class="card"><h2>Report sostituzioni</h2><div class="row"><select data-act="regmode">${["giorno", "settimana", "mese", "mesi"].map(m => `<option value="${m}" ${ui.regMode === m ? "selected" : ""}>${m === "mesi" ? "più mesi" : m}</option>`).join("")}</select>${ui.regMode === "mesi" ? "" : `<input type="date" value="${ui.regDate}" data-act="regdate">`}<button class="b" data-act="xlsx">Esportare in Excel</button></div>
   ${ui.regMode === "mesi" ? `<div class="chips" style="margin-top:10px">${annoScolasticoMesi().map(k => `<span class="chip ${(ui.regMonths || []).includes(k) ? "on" : ""}" data-act="regmonth" data-k="${k}"><b>${MESI[+k.slice(5) - 1]}</b><small>${k.slice(0, 4)}</small></span>`).join("")}</div><div class="row" style="margin-top:8px"><button class="b sm" data-act="regmonthsall">Tutti</button><button class="b sm" data-act="regmonthsnone">Nessuno</button></div>` : ""}</div>`;
-  h += `<div class="card"><h3>Assenze nel periodo (${ab.length})</h3>${ab.length ? ab.map(x => { const st = absStat(x); return `<div class="sub"><div class="m"><b>${esc(nice(x.docente))}</b> · ${esc(fmtDate(x.dal))}${x.al && x.al !== x.dal ? " → " + esc(fmtDate(x.al)) : ""}<div class="mut">${x.ore === "tutto" ? "tutto il giorno" : "ore " + x.ore.join(", ")} · ${esc(x.motivo || "")} · ${st.tot ? `${st.sost} ${st.sost === 1 ? "ora sostituita" : "ore sostituite"}${st.tot - st.sost ? `, ${st.tot - st.sost} non sostituite` : ""}${state.sostituzioni.some(z => z.assenzaId === x.id && !z.del && z.nosub) ? " (sostegno non sostituito)" : ""}` : "nessuna ora da coprire"}</div></div></div>`; }).join("") : '<p class="mut">Nessuna assenza nel periodo.</p>'}</div>`;
-  h += `<div class="card"><h3>${esc(label)} — ${rows.length} ${rows.length === 1 ? "ora di assenza" : "ore di assenza"}${rows.length ? `, ${subbed.length} sostituite, ${tr} già sul registro` : ""}</h3>
-  ${rows.length ? `<p class="mut" style="margin:0 0 6px">Spuntare «Sul registro» quando l'ora è stata segnata sul registro cartaceo.</p>${[...new Set(rows.map(s => s.data))].map(d => `<div class="dayh">${esc(fmtDate(d))}</div><div class="rgrid">${rows.filter(s => s.data === d).map(s => `<div class="rr ${s.sostituto ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Assente:</span> <b>${esc(nice(s.assente))}</b></div><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${s.sostituto ? tierTag(s.tier, "", s.anticipo, kindOf(s)) : `<span class="uncov">${statoNoSub(s)}</span>`}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}</div>`).join("")}` : '<p class="mut">Nessuna ora di assenza nel periodo.</p>'}</div>`;
+  h += `<div class="card"><h3>Assenze nel periodo (${ab.length})</h3>${ab.length ? ab.map(x => { const st = absStat(x); return `<div class="sub"><div class="m"><b>${esc(nice(x.docente))}</b> · ${esc(fmtDate(x.dal))}${x.al && x.al !== x.dal ? " → " + esc(fmtDate(x.al)) : ""}<div class="mut">${x.ore === "tutto" ? "tutto il giorno" : "ore " + x.ore.join(", ")} · ${esc(x.motivo || "")} · ${st.tot ? `${st.sost} ${st.sost === 1 ? "ora sostituita" : "ore sostituite"}${st.div ? `, ${st.div} con classe divisa` : ""}${st.tot - st.sost - st.div ? `, ${st.tot - st.sost - st.div} non sostituite` : ""}${state.sostituzioni.some(z => z.assenzaId === x.id && !z.del && z.nosub) ? " (sostegno non sostituito)" : ""}` : "nessuna ora da coprire"}</div></div></div>`; }).join("") : '<p class="mut">Nessuna assenza nel periodo.</p>'}</div>`;
+  const gg = regGiorni(), nDiv = rows.filter(s => s.diviso && !s.sostituto).length;
+  h += `<div class="card"><h3>${esc(label)} — ${rows.length} ${rows.length === 1 ? "ora di assenza" : "ore di assenza"}${rows.length ? `, ${subbed.length} sostituite${nDiv ? `, ${nDiv} con classe divisa` : ""}, ${tr} già sul registro` : ""}</h3>
+  ${gg.length ? `<p class="mut" style="margin:0 0 6px">Per ogni giorno: tutti i docenti assenti, con chi li ha sostituiti e in quale modalità. Spuntare «Sul registro» quando l'ora è stata segnata sul registro cartaceo.</p>${gg.map(g => `<div class="dayh">${esc(fmtDate(g.data))} <span style="text-transform:none;font-weight:500">· ${g.docs.length} ${g.docs.length === 1 ? "docente assente" : "docenti assenti"}</span></div>${g.docs.map(x => `<div class="abg"><div class="abh"><b>${esc(nice(x.docente))}</b><span class="mut">${esc(oreAss(x.a))}${x.a && x.a.motivo ? " · " + esc(x.a.motivo) : ""}${x.a && x.a.nota ? " · " + esc(x.a.nota) : ""}</span></div>${x.rows.length ? `<div class="rgrid">${x.rows.map(s => `<div class="rr ${s.sostituto || s.diviso ? "" : "nos"}"><div class="rh"><b>${s.ora}ª</b><small>${esc(s.classe)}</small></div><div class="rm"><div><span class="mut">Sostituto:</span> <b>${s.sostituto ? esc(nice(s.sostituto)) : "—"}</b></div><div>${modTag(s)}</div></div><label class="rg ${s.firmata ? "on" : ""}"><input type="checkbox" data-act="firmata" data-id="${s.id}" ${s.firmata ? "checked" : ""}><span>Sul registro</span></label></div>`).join("")}</div>` : '<p class="mut" style="margin:2px 4px 6px">Nessuna ora da coprire.</p>'}</div>`).join("")}`).join("")}` : '<p class="mut">Nessun docente assente nel periodo.</p>'}</div>`;
   const tot = {}; subbed.forEach(s => { const t = tot[s.sostituto] = tot[s.sostituto] || { n: 0, 1: 0, alt: 0, 2: 0, 3: 0, 4: 0, 0: 0 }; t.n++; t[s.tier || 0]++; if (s.tier === 1 && kindOf(s) === "A") t.alt++; });
   const names = Object.keys(tot).sort();
   if (names.length) h += `<div class="card"><h3>Riepilogo per docente</h3><div class="scroll"><table class="t"><thead><tr><th>Docente</th><th>Totale</th><th>A disposizione</th><th>Alternativa IRC</th><th>Sostegno</th><th>Recupero</th><th>Eccedenti</th><th>Altro</th></tr></thead><tbody>${names.map(n => `<tr><td>${esc(nice(n))}</td><td>${tot[n].n}</td><td>${(tot[n][1] - tot[n].alt) || ""}</td><td>${tot[n].alt || ""}</td><td>${tot[n][2] || ""}</td><td>${tot[n][3] || ""}</td><td>${tot[n][4] || ""}</td><td>${tot[n][0] || ""}</td></tr>`).join("")}</tbody></table></div></div>`;
@@ -969,10 +1022,13 @@ function makeXlsx(sheets) {
 }
 function exportXlsx() {
   const { rows, label } = regRows(), subbed = rows.filter(s => s.sostituto);
-  const sost = [["Data", "Ora", "Orario", "Classe", "Docente assente", "Docente sostituto", "Tipo", "Sul registro"]].concat(rows.map(s => [{ d: s.data }, s.ora, oraLabel(s.ora), s.classe, nice(s.assente), s.sostituto ? nice(s.sostituto) : "", s.sostituto ? tipoReg(s.tier, kindOf(s)) + (s.tier === 3 && s.anticipo ? " (anticipo, da concordare)" : "") : statoNoSub(s), s.firmata ? "sì" : "no"]));
+  const motA = s => { const a = state.assenze.find(x => x.id === s.assenzaId); return a ? a.motivo || "" : ""; };
+  const sost = [["Data", "Docente assente", "Motivo", "Ora", "Orario", "Classe", "Docente sostituto", "Modalità", "Sul registro"]].concat(rows.map(s => [{ d: s.data }, nice(s.assente), motA(s), s.ora, oraLabel(s.ora), s.classe, s.sostituto ? nice(s.sostituto) : "", s.sostituto ? tipoReg(s.tier, kindOf(s)) + (s.tier === 3 && s.anticipo ? " (anticipo, da concordare)" : "") : statoNoSub(s), s.firmata ? "sì" : "no"]));
+  const perGiorno = [["Data", "Docente assente", "Motivo", "Ore di assenza", "Ore da coprire", "Sostituzioni (ora, classe: sostituto, modalità)"]];
+  regGiorni().forEach(g => g.docs.forEach(x => perGiorno.push([{ d: g.data }, nice(x.docente), x.a ? x.a.motivo || "" : "", oreAss(x.a), x.rows.length, x.rows.map(s => `${s.ora}ª ${s.classe}: ` + (s.sostituto ? nice(s.sostituto) + " (" + tipoReg(s.tier, kindOf(s)) + ")" : statoNoSub(s))).join("; ")])));
   const tot = {}; subbed.forEach(s => { const t = tot[s.sostituto] = tot[s.sostituto] || { n: 0, 1: 0, alt: 0, 2: 0, 3: 0, 4: 0, 0: 0 }; t.n++; t[s.tier || 0]++; if (s.tier === 1 && kindOf(s) === "A") t.alt++; });
   const riep = [["Docente", "Totale", "A disposizione", "Alternativa IRC", "Già in classe", "Recupero", "Ore eccedenti", "Altro"]].concat(Object.keys(tot).sort().map(n => [nice(n), tot[n].n, (tot[n][1] - tot[n].alt) || 0, tot[n].alt || 0, tot[n][2] || 0, tot[n][3] || 0, tot[n][4] || 0, tot[n][0] || 0]));
-  const sheets = [{ name: "Sostituzioni", rows: sost, widths: [12, 6, 13, 9, 20, 20, 30, 12] }, { name: "Riepilogo docenti", rows: riep, widths: [22, 9, 16, 16, 14, 10, 14, 8] }, { name: "Assenze", rows: [["Docente assente", "Dal", "Al", "Ore", "Motivo", "Ore da coprire", "Sostituite", "Non sostituite", "Nota"]].concat(regAbs().map(x => { const st = absStat(x); return [nice(x.docente), { d: x.dal }, { d: x.al || x.dal }, x.ore === "tutto" ? "tutto il giorno" : x.ore.join(", "), x.motivo || "", st.tot, st.sost, st.tot - st.sost, x.nota || ""]; })), widths: [22, 12, 12, 16, 16, 14, 11, 14, 30] }];
+  const sheets = [{ name: "Assenti per giorno", rows: perGiorno, widths: [12, 22, 16, 18, 12, 90] }, { name: "Sostituzioni", rows: sost, widths: [12, 22, 16, 6, 13, 9, 22, 30, 12] }, { name: "Riepilogo docenti", rows: riep, widths: [22, 9, 16, 16, 14, 10, 14, 8] }, { name: "Assenze", rows: [["Docente assente", "Dal", "Al", "Ore", "Motivo", "Ore da coprire", "Sostituite", "Classe divisa", "Non sostituite", "Nota"]].concat(regAbs().map(x => { const st = absStat(x); return [nice(x.docente), { d: x.dal }, { d: x.al || x.dal }, x.ore === "tutto" ? "tutto il giorno" : x.ore.join(", "), x.motivo || "", st.tot, st.sost, st.div, st.tot - st.sost - st.div, x.nota || ""]; })), widths: [22, 12, 12, 16, 16, 14, 11, 12, 14, 30] }];
   const pr = permessiStato();
   if (pr.length) sheets.push({ name: "Ore da recuperare", rows: [["Docente", "Data del permesso", "Ore", "Recuperate", "Residue", "Scadenza"]].concat(pr.map(i => [nice(i.p.docente), { d: i.p.data }, i.p.ore, i.p.ore - i.res, i.res, { d: i.scad }])), widths: [22, 18, 6, 12, 9, 12] });
   const name = `report_sostituzioni_${(label || "").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "").slice(0, 60) || "report"}.xlsx`;
@@ -1039,7 +1095,7 @@ function vImpostazioni() {
     <div class="scroll"><table class="t"><tr><th>Docente</th><th>Disponibile</th><th>Ore indicate</th><th></th></tr>${teachers().map(t => { const a = dis[t.k]; return `<tr><td>${esc(nice(t.k))}</td><td><input type="checkbox" data-act="dispon" data-id="${esc(t.k)}" ${a ? "checked" : ""}></td><td>${a ? (a.slot && a.slot.length ? esc(a.slot.map(s => DAYN[s.slice(0, 3)].slice(0, 3) + " " + s[3] + "ª").join(", ")) : "qualsiasi ora libera") + (a.dv ? " ⚠" : "") : ""}${a && a.nota ? `<div class="mut">${esc(a.nota)}</div>` : ""}</td><td>${a ? `<button class="b sm" data-act="dispedit" data-id="${esc(t.k)}">Modificare</button>` : ""}</td></tr>`; }).join("")}</table></div></details>`;
   }
   h += `<p class="mut" style="text-align:center;font-size:12px">Versione dell'app: ${BUILD}</p>`;
-  h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti già presenti nella classe (sostegno e compresenza)</li><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (senza anticipare l'ingresso)</li><li>Docenti a disposizione, poi docenti impegnati nell'alternativa alla religione (IRC)</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti con disponibilità a ore eccedenti</li><li>Scelta manuale: docenti con lezione quel giorno e liberi in quell'ora</li></ol><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa del docente assente si coprono con gli stessi criteri.</p></div>`;
+  h += `<div class="card"><h2>Regole di sostituzione</h2><ol style="margin:0;padding-left:20px"><li>Docenti già presenti nella classe (sostegno e compresenza)</li><li>Docenti che devono recuperare, se l'ora è una buca o in coda al loro orario (senza anticipare l'ingresso)</li><li>Docenti a disposizione, poi docenti impegnati nell'alternativa alla religione (IRC)</li><li>Docenti che devono recuperare, se l'ora anticipa l'ingresso: da concordare con il docente</li><li>Docenti con disponibilità a ore eccedenti</li><li>Scelta manuale: docenti con lezione quel giorno e liberi in quell'ora, più tutti i docenti di sostegno (anche se impegnati altrove)</li></ol><p class="mut">Se nessun sostituto è disponibile, è possibile segnare «Classe divisa».</p><p class="mut">A parità di fascia: meno sostituzioni nel mese, poi chi conosce già la classe o la materia. Le ore di alternativa del docente assente si coprono con gli stessi criteri.</p></div>`;
   return h;
 }
 function vSyncBox() {
@@ -1059,7 +1115,7 @@ function editSub(id) {
   const s = state.sostituzioni.find(x => x.id === id); if (!s) return;
   const others = subs().filter(x => x.id !== id);
   dlg(`<h3 style="margin-top:0">${esc(s.ora)}ª ora · ${esc(s.classe)} · ${esc(nice(s.materia))}</h3><p class="mut">${esc(fmtDateLong(s.data))} — assente: ${esc(nice(s.assente))}</p>
-  <input type="hidden" id="es_val" value="${s.sostituto ? esc(s.sostituto + "|" + (s.tier || 0) + "|" + (s.anticipo ? 1 : 0) + "|" + (kindOf(s) || "")) : ""}">${optList(needFor(s), others, s.sostituto, "espick")}
+  <input type="hidden" id="es_val" value="${s.sostituto ? esc(s.sostituto + "|" + (s.tier || 0) + "|" + (s.anticipo ? 1 : 0) + "|" + (kindOf(s) || "")) : s.diviso ? "DIV" : ""}">${optList(needFor(s), others, s.sostituto, "espick", undefined, s.diviso)}
   <div class="row" style="margin-top:14px"><button class="b pri" data-act="essave" data-id="${id}">Salvare</button><button class="b" data-act="dlgclose">Annullare</button></div>`);
 }
 function editDisp(id) {
@@ -1084,9 +1140,11 @@ function calc(later) {
   if (!f.tutto && !f.ore.length) return toast("Scegliere le ore oppure «Tutto il giorno»");
   if (!E.datesBetween(f.dal, f.al && f.al >= f.dal ? f.al : f.dal).some(x => E.dayCode(x) && !closedOn(x))) return toast("I giorni scelti sono festivi o di chiusura della scuola");
   if (f.tutto && f.motivo === "Permesso breve") return toast("Per tutto il giorno il motivo non può essere «Permesso breve»");
-  if (!f.tutto) f.motivo = "Permesso breve";
+  if (!f.tutto && !MOTIVI_PARZ.includes(f.motivo)) f.motivo = "Permesso breve";
   const pc = permessoCalc(f), over = pc.find(p => p.eccesso > 0);
   if (over) return toast(`Permesso breve: il massimo per ${fmtDate(over.data)} è ${over.max} ${over.max === 1 ? "ora" : "ore"} su ${over.tot}. Occorre togliere ${over.eccesso} ${over.eccesso === 1 ? "ora" : "ore"}.`);
+  const gia = subs().filter(x => x.sostituto === f.docente && x.data >= f.dal && x.data <= (f.al && f.al >= f.dal ? f.al : f.dal) && !closedOn(x.data) && (f.tutto || f.ore.includes(x.ora))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora);
+  if (gia.length && !confirm(`ATTENZIONE: ${nice(f.docente)} è già indicato come sostituto di ${[...new Set(gia.map(x => nice(x.assente)))].join(", ")} in ${gia.length} ${gia.length === 1 ? "ora" : "ore"}:\n\n${gia.slice(0, 8).map(x => `• ${fmtDate(x.data)}, ${x.ora}ª ora, classe ${x.classe}`).join("\n")}${gia.length > 8 ? "\n• …" : ""}\n\nRegistrando l'assenza, queste ore restano senza un sostituto valido: dopo il salvataggio compare un avviso in Oggi per cambiarlo.\n\nProseguire?`)) return;
   const a = { id: uid(), docente: f.docente, dal: f.dal, al: f.al && f.al !== f.dal ? f.al : "", ore: f.tutto ? "tutto" : [...f.ore].sort(), motivo: f.motivo, nota: f.nota };
   const nSost = E.coverNeeds(state, { ...a, al: a.al || a.dal }).filter(n => n.tipo === "sostegno").length;
   if (!later && nSost) { ui.draft = null; ui.sostAsk = { a, pc, promemoria: f.promemoria, nSost }; render(); setTimeout(() => $("#sostcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
@@ -1117,13 +1175,13 @@ function saveDraft(later) {
   if (dd.existing) {
     for (const r of dd.rows) {
       const ex = state.sostituzioni.find(s => !s.del && s.assenzaId === dd.assenza.id && s.data === r.data && s.ora === r.ora);
-      if (ex) { if (!r.nosub && (r.sostituto || null) !== (ex.sostituto || null)) { ex.sostituto = r.sostituto; ex.tier = r.tier; ex.anticipo = !!r.anticipo; ex.kind = r.kind || null; ex.firmata = false; } ex.pending = false; touch(ex); }
-      else put("sostituzioni", { assenzaId: dd.assenza.id, data: r.data, ora: r.ora, classe: r.classe, classi: r.classi, materia: r.materia, tipo: r.tipo, assente: r.assente, sostituto: r.sostituto, tier: r.tier, anticipo: !!r.anticipo, kind: r.kind || null, auto: r.auto, firmata: false });
+      if (ex) { if (!r.nosub && ((r.sostituto || null) !== (ex.sostituto || null) || !!r.diviso !== !!ex.diviso)) { ex.sostituto = r.sostituto; ex.tier = r.tier; ex.anticipo = !!r.anticipo; ex.kind = r.kind || null; ex.diviso = !!r.diviso; ex.firmata = false; } ex.pending = false; touch(ex); }
+      else put("sostituzioni", { assenzaId: dd.assenza.id, data: r.data, ora: r.ora, classe: r.classe, classi: r.classi, materia: r.materia, tipo: r.tipo, assente: r.assente, sostituto: r.sostituto, tier: r.tier, anticipo: !!r.anticipo, kind: r.kind || null, diviso: !!r.diviso, auto: r.auto, firmata: false });
     }
     ui.draft = null; ui.date = dd.assenza.dal; ui.tab = "oggi"; commit(); window.scrollTo(0, 0); toast("Sostituzioni aggiornate"); return;
   }
   const a = put("assenze", { ...dd.assenza });
-  for (const r of dd.rows) put("sostituzioni", { assenzaId: a.id, data: r.data, ora: r.ora, classe: r.classe, classi: r.classi, materia: r.materia, tipo: r.tipo, assente: r.assente, sostituto: later ? null : r.sostituto, tier: later ? null : r.tier, anticipo: later ? false : !!r.anticipo, kind: later ? null : (r.kind || null), auto: r.auto, firmata: false, nosub: !!r.nosub, pending: !!later && r.auto !== false });
+  for (const r of dd.rows) put("sostituzioni", { assenzaId: a.id, data: r.data, ora: r.ora, classe: r.classe, classi: r.classi, materia: r.materia, tipo: r.tipo, assente: r.assente, sostituto: later ? null : r.sostituto, tier: later ? null : r.tier, anticipo: later ? false : !!r.anticipo, kind: later ? null : (r.kind || null), diviso: later ? false : !!r.diviso, auto: r.auto, firmata: false, nosub: !!r.nosub, pending: !!later && r.auto !== false });
   for (const p of dd.permessi || []) if (p.rec > 0) { put("permessi", { docente: a.docente, data: p.data, ore: p.rec, fatteMan: 0, assenzaId: a.id }); const ex = state.recuperi.find(r => r.id === a.docente && !r.del); put("recuperi", { id: a.docente, ore: (ex ? ex.ore : 0) + p.rec }); }
   if (dd.promemoria) { const n = dd.rows.filter(r => r.sostituto).length; put("eventi", { titolo: `Assenza ${nice(a.docente)}`, data: a.dal, ora: "07:30", durata: 30, nota: (() => { const cop = dd.rows.filter(r => !r.nosub).length; return !cop ? "Docente di sostegno: nessuna sostituzione prevista" : later ? `${cop} ${cop === 1 ? "ora" : "ore"} da coprire (sostituzioni da definire)` : `${cop} ${cop === 1 ? "ora" : "ore"} da coprire (${n} con sostituto)`; })(), ripeti: "", auto: true, ref: a.id }); }
   ui.draft = null; ui.form = null; ui.date = a.dal; ui.tab = "oggi"; commit(); window.scrollTo(0, 0); { const gg = new Set(dd.rows.map(r => r.data)).size; ui.date = firstSchoolDay(a.dal); toast(later ? "Assenza salvata: sostituzioni da definire" : dd.rows.every(r => r.nosub) ? "Assenza salvata, senza sostituzione" : gg > 1 ? `Assenza salvata: ${dd.rows.length} ore su ${gg} giorni (frecce o giorni in alto per scorrere)` : "Assenza e sostituzioni salvate"); }
@@ -1173,7 +1231,7 @@ document.addEventListener("click", e => {
   else if (a === "savelater") saveDraft(true);
   else if (a === "delabs") delAbs(id);
   else if (a === "editsub") editSub(id);
-  else if (a === "essave") { const s = state.sostituzioni.find(x => x.id === id); const v = $("#es_val").value; if (!v) { s.sostituto = null; s.tier = null; s.anticipo = false; s.kind = null; } else { const [n, tr, an, kd] = v.split("|"); s.sostituto = n; s.tier = +tr; s.anticipo = an === "1"; s.kind = kd || null; s.nosub = false; s.auto = true; } s.pending = false; touch(s); $("#dlg").close(); commit(); }
+  else if (a === "essave") { const s = state.sostituzioni.find(x => x.id === id); const v = $("#es_val").value; if (v === "DIV") { s.sostituto = null; s.tier = null; s.anticipo = false; s.kind = null; s.diviso = true; s.nosub = false; s.auto = true; } else if (!v) { s.sostituto = null; s.tier = null; s.anticipo = false; s.kind = null; s.diviso = false; } else { s.diviso = false; const [n, tr, an, kd] = v.split("|"); s.sostituto = n; s.tier = +tr; s.anticipo = an === "1"; s.kind = kd || null; s.nosub = false; s.auto = true; } s.pending = false; touch(s); $("#dlg").close(); commit(); }
   else if (a === "dlgclose") $("#dlg").close();
     else if (a === "xlsx") exportXlsx();
   else if (a === "addev") { const ev = { titolo: $("#e_tit").value.trim(), data: $("#e_data").value, ora: $("#e_ora").value, ripeti: $("#e_rip").value, nota: $("#e_nota").value, durata: 30 }; if (!ev.titolo || !ev.data) return toast("Titolo e data sono obbligatori"); put("eventi", ev); ui.evForm = null; commit(); toast("Promemoria aggiunto"); }
@@ -1203,7 +1261,7 @@ document.addEventListener("click", e => {
   else if (a === "recman") { const p = state.permessi.find(x => x.id === t.dataset.id), d = +t.dataset.d; if (!p) return; const it = permessiStato().find(i => i.p.id === p.id); const ex = state.recuperi.find(r => r.id === p.docente && !r.del);
     if (d > 0 && it && it.res > 0) { p.fatteMan = (p.fatteMan || 0) + 1; touch(p); if (ex) { ex.ore = Math.max(0, ex.ore - 1); touch(ex); } commit(); }
     else if (d < 0 && p.fatteMan > 0) { p.fatteMan--; touch(p); put("recuperi", { id: p.docente, ore: (ex ? ex.ore : 0) + 1 }); commit(); } }
-  else if (a === "draftpick") { const r = ui.draft.rows[+t.dataset.i], v = t.dataset.v, y = scrollY; if (!v) { r.sostituto = null; r.tier = null; r.anticipo = false; r.kind = null; } else { const [n, tr, an, kd] = v.split("|"); r.sostituto = n; r.tier = +tr; r.anticipo = an === "1"; r.kind = kd || null; } render(); scrollTo(0, y); }
+  else if (a === "draftpick") { const r = ui.draft.rows[+t.dataset.i], v = t.dataset.v, y = scrollY; r.diviso = v === "DIV"; if (!v || v === "DIV") { r.sostituto = null; r.tier = null; r.anticipo = false; r.kind = null; } else { const [n, tr, an, kd] = v.split("|"); r.sostituto = n; r.tier = +tr; r.anticipo = an === "1"; r.kind = kd || null; } render(); scrollTo(0, y); }
   else if (a === "espick") { $("#es_val").value = t.dataset.v; $$("#dlg .opt, #dlg .mc").forEach(x => x.classList.remove("sel")); t.classList.add("sel"); }
   else if (a === "chiudel") { const S = state.settings; S.chiusure = (S.chiusure || []).filter(c => c.id !== id); touch(S); commit(); }
   else if (a === "chiuadd") { const dal = $("#ch_dal").value, al = $("#ch_al").value; if (!dal) return toast("Scegliere la data"); if (al && al < dal) return toast("La data finale è prima di quella iniziale"); const S = state.settings; S.chiusure = (S.chiusure || []).concat({ id: uid(), dal, al: al || "", nota: $("#ch_nota").value.trim() || "Chiusura" }); touch(S); commit(); toast("Chiusura aggiunta"); }
@@ -1212,7 +1270,7 @@ document.addEventListener("click", e => {
   else if (a === "defsub") {
     const as = state.assenze.find(x => x.id === id && !x.del); if (!as) return;
     const rows = E.propose(state, { ...as, al: as.al || as.dal });
-    rows.forEach(r => { const ex = state.sostituzioni.find(s => !s.del && s.assenzaId === as.id && s.data === r.data && s.ora === r.ora); if (ex && ex.nosub) { r.nosub = true; r.auto = false; r.sostituto = null; r.tier = null; } else if (ex && ex.sostituto) { r.sostituto = ex.sostituto; r.tier = ex.tier; r.anticipo = !!ex.anticipo; r.kind = ex.kind || null; } });
+    rows.forEach(r => { const ex = state.sostituzioni.find(s => !s.del && s.assenzaId === as.id && s.data === r.data && s.ora === r.ora); if (ex && ex.nosub) { r.nosub = true; r.auto = false; r.sostituto = null; r.tier = null; } else if (ex && ex.diviso) { r.diviso = true; r.sostituto = null; r.tier = null; r.kind = null; } else if (ex && ex.sostituto) { r.sostituto = ex.sostituto; r.tier = ex.tier; r.anticipo = !!ex.anticipo; r.kind = ex.kind || null; } });
     ui.draft = { assenza: { ...as }, rows, existing: true, permessi: [] }; ui.tab = "assenze"; render(); setTimeout(() => $("#draftcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
   else if (a === "regmonth") { const m = ui.regMonths || (ui.regMonths = []), k = t.dataset.k; ui.regMonths = m.includes(k) ? m.filter(x => x !== k) : [...m, k]; render(); }
