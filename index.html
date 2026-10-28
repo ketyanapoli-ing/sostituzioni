@@ -600,7 +600,7 @@ function optList(need, currentSubs, selected, act, idx, diviso) {
 }
 
 /* ============ rendering ============ */
-const BUILD = "28/10/2026 · 15";
+const BUILD = "28/10/2026 · 16";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -931,19 +931,19 @@ function formBits() { const f = ui.form; $("#orebox").innerHTML = oreChips(f); $
 function vAssenze() {
   if (!state.orario) return needsData();
   const dr = ui.form || (ui.form = { docente: "", dal: ui.date, al: "", tutto: true, ore: [], motivo: "Malattia", nota: "", promemoria: true });
-  let h = `<div class="card"><h2>Nuova assenza</h2>
+  let h = `<div class="card"><h2>${dr.editId ? "Modificare l'assenza" : "Nuova assenza"}</h2>
   <label class="f">Docente</label><select id="f_doc" data-act="formchg"><option value="">— scegliere —</option>${teachers().map(t => `<option value="${esc(t.k)}" ${dr.docente === t.k ? "selected" : ""}>${esc(nice(t.k))} — ${esc(t.materie.join("/").toLowerCase())}</option>`).join("")}</select>
   <div class="row"><div class="grow"><label class="f">Dal</label><input type="date" id="f_dal" data-act="formchg" value="${dr.dal}"></div><div class="grow"><label class="f">Al (facoltativo)</label><input type="date" id="f_al" data-act="formchg" value="${dr.al}"></div></div>
   <div id="chiusibox">${chiusiBox(dr)}</div><div id="orebox">${oreChips(dr)}</div><div id="motbox">${motBox(dr)}</div>
   <label class="f">Nota (facoltativa)</label><input id="f_nota" value="${esc(dr.nota)}">
   <label style="display:block;margin:10px 0"><input type="checkbox" id="f_prom" ${dr.promemoria ? "checked" : ""}> Creare un promemoria per quel giorno</label>
-  <div class="row"><button class="b pri" data-act="calc">Calcolare le sostituzioni</button><button class="b" data-act="calclater">Salvare solo l'assenza</button></div><p class="mut" style="margin:8px 0 0">«Salvare solo l'assenza» lascia le sostituzioni da definire: vedere la schermata Oggi.</p></div>`;
+  <div class="row"><button class="b pri" data-act="calc">Calcolare le sostituzioni</button><button class="b" data-act="calclater">Salvare solo l'assenza</button>${dr.editId ? '<button class="b" data-act="editcancel">Annullare la modifica</button>' : ""}</div><p class="mut" style="margin:8px 0 0">${dr.editId ? "Le sostituzioni già scelte restano per le ore che non cambiano. " : ""}«Salvare solo l'assenza» lascia le sostituzioni da definire: vedere la schermata Oggi.</p></div>`;
   if (ui.sostAsk) h += vSostAsk();
   if (ui.draft) h += vDraft();
   const abs = E.activeAbs(state).sort((a, b) => b.dal.localeCompare(a.dal)).slice(0, 40);
   h += `<div class="card"><h3>Assenze registrate</h3>${abs.length ? abs.map(a => {
     const n = subs().filter(s => s.assenzaId === a.id).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora), u = n.filter(isOpenSub), pend = u.some(s => s.pending);
-    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.some(s => s.nosub) && !n.some(s => !s.nosub) ? `<span class="nosub">sostegno non sostituito (${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : (c => `${c} ${c === 1 ? "sostituzione" : "sostituzioni"}`)(n.filter(s => s.sostituto).length)}${n.some(s => s.diviso) ? ` · classe divisa (${n.filter(s => s.diviso).length})` : ""}${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definire" : "Riproporre"}</button>` : ""}<button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
+    return `<div class="abs"><div class="sub"><div class="m"><b>${esc(nice(a.docente))}</b> · ${esc(fmtDate(a.dal))}${a.al && a.al !== a.dal ? " → " + esc(fmtDate(a.al)) : ""}<div class="mut">${a.ore === "tutto" ? "tutto il giorno" : "ore " + a.ore.join(", ")} · ${esc(a.motivo || "")} · ${n.some(s => s.nosub) && !n.some(s => !s.nosub) ? `<span class="nosub">sostegno non sostituito (${n.length} ${n.length === 1 ? "ora" : "ore"})</span>` : (c => `${c} ${c === 1 ? "sostituzione" : "sostituzioni"}`)(n.filter(s => s.sostituto).length)}${n.some(s => s.diviso) ? ` · classe divisa (${n.filter(s => s.diviso).length})` : ""}${u.length ? ` · <span class="${pend ? "pend" : "uncov"}">${u.length} ${pend ? "da assegnare" : "scoperte"}</span>` : ""}</div></div>${u.length ? `<button class="b sm pri" data-act="defsub" data-id="${a.id}">${pend ? "Definire" : "Riproporre"}</button>` : ""}<button class="b sm" data-act="editabs" data-id="${a.id}">Modificare</button><button class="b sm" data-act="gotoday" data-date="${a.dal}">Aprire</button><button class="b sm bad" data-act="delabs" data-id="${a.id}">✕</button></div>
     ${n.length ? `<details class="subs"><summary>Sostituzioni (${n.length}) · da correggere</summary>${n.map(s => `<div class="sub"><div class="m"><b>${esc(fmtDate(s.data))} · ${s.ora}ª</b> ${s.classe === "—" ? "IRC" : "classe " + esc(s.classe)}<div class="mut">${s.sostituto ? esc(nice(s.sostituto)) + tierTag(s.tier, "", s.anticipo, kindOf(s)) : s.diviso ? "Classe divisa" : s.nosub ? "Sostegno non sostituito" : s.auto === false ? "da gestire a mano" : s.pending ? "Da assegnare" : "Scoperta"}</div></div><button class="b sm" data-act="editsub" data-id="${s.id}">Cambiare</button></div>`).join("")}</details>` : ""}</div>`;
   }).join("") : '<span class="mut">Nessuna assenza.</span>'}</div>`;
   h += vRecGest() + vRecStorico();
@@ -1181,14 +1181,14 @@ function calc(later) {
   if (over) return toast(`Permesso breve: il massimo per ${fmtDate(over.data)} è ${over.max} ${over.max === 1 ? "ora" : "ore"} su ${over.tot}. Occorre togliere ${over.eccesso} ${over.eccesso === 1 ? "ora" : "ore"}.`);
   const gia = subs().filter(x => x.sostituto === f.docente && x.data >= f.dal && x.data <= (f.al && f.al >= f.dal ? f.al : f.dal) && !closedOn(x.data) && (f.tutto || f.ore.includes(x.ora))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora);
   if (gia.length && !confirm(`ATTENZIONE: ${nice(f.docente)} è già indicato come sostituto di ${[...new Set(gia.map(x => nice(x.assente)))].join(", ")} in ${gia.length} ${gia.length === 1 ? "ora" : "ore"}:\n\n${gia.slice(0, 8).map(x => `• ${fmtDate(x.data)}, ${x.ora}ª ora, classe ${x.classe}`).join("\n")}${gia.length > 8 ? "\n• …" : ""}\n\nRegistrando l'assenza, queste ore restano senza un sostituto valido: dopo il salvataggio compare un avviso in Oggi per cambiarlo.\n\nProseguire?`)) return;
-  const a = { id: uid(), docente: f.docente, dal: f.dal, al: f.al && f.al !== f.dal ? f.al : "", ore: f.tutto ? "tutto" : [...f.ore].sort(), motivo: f.motivo, nota: f.nota };
+  const a = { id: f.editId || uid(), docente: f.docente, dal: f.dal, al: f.al && f.al !== f.dal ? f.al : "", ore: f.tutto ? "tutto" : [...f.ore].sort(), motivo: f.motivo, nota: f.nota };
   const nSost = E.coverNeeds(state, { ...a, al: a.al || a.dal }).filter(n => n.tipo === "sostegno").length;
-  if (!later && nSost) { ui.draft = null; ui.sostAsk = { a, pc, promemoria: f.promemoria, nSost }; render(); setTimeout(() => $("#sostcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
+  if (!later && nSost) { ui.draft = null; ui.sostAsk = { a, pc, promemoria: f.promemoria, nSost, editOf: f.editId || null }; render(); setTimeout(() => $("#sostcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
   if (later) {
     const rows = E.coverNeeds(state, { ...a, al: a.al || a.dal }).sort((x, y) => x.date.localeCompare(y.date) || x.ora - y.ora).map(n => ({ data: n.date, ora: n.ora, classe: n.classe, classi: n.classi, materia: n.materia, tipo: n.tipo, assente: a.docente, sostituto: null, tier: null, anticipo: false, auto: n.auto }));
-    ui.draft = { assenza: a, rows, promemoria: f.promemoria, permessi: pc }; return saveDraft(true);
+    ui.draft = { assenza: a, rows: mergeEdit(rows, a), promemoria: f.promemoria, permessi: pc, editOf: f.editId || null }; return saveDraft(true);
   }
-  ui.draft = { assenza: a, rows: E.propose(state, { ...a, al: a.al || a.dal }), promemoria: f.promemoria, permessi: pc };
+  ui.draft = { assenza: a, rows: mergeEdit(E.propose(state, { ...a, al: a.al || a.dal }), a), promemoria: f.promemoria, permessi: pc, editOf: f.editId || null };
   render(); setTimeout(() => $("#app .card:nth-child(2)")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 }
 function vSostAsk() {
@@ -1202,12 +1202,43 @@ function sostBuild(senza) {
   const q = ui.sostAsk, ass = { ...q.a, al: q.a.al || q.a.dal };
   let rows = E.propose(state, ass, senza ? { senzaSostegno: true } : undefined);
   if (senza) rows = rows.concat(E.coverNeeds(state, ass).filter(n => n.tipo === "sostegno").map(n => ({ data: n.date, ora: n.ora, classe: n.classe, classi: n.classi, materia: n.materia, tipo: n.tipo, assente: q.a.docente, sostituto: null, tier: null, anticipo: false, auto: false, nosub: true }))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora);
-  ui.draft = { assenza: q.a, rows, promemoria: q.promemoria, permessi: q.pc }; ui.sostAsk = null;
+  rows = mergeEdit(rows, q.a, !!senza); ui.draft = { assenza: q.a, rows, promemoria: q.promemoria, permessi: q.pc, editOf: q.editOf || null }; ui.sostAsk = null;
   if (senza && !rows.some(r => !r.nosub)) return saveDraft(false);
   render(); setTimeout(() => $("#draftcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 }
+/* in modifica: riporta sulle nuove ore le sostituzioni già scelte (stesso giorno e stessa ora) */
+function mergeEdit(rows, a, keepNosub = true) {
+  const old = state.assenze.find(x => x.id === a.id && !x.del);
+  if (!old || old.docente !== a.docente) return rows;
+  rows.forEach(r => {
+    const ex = state.sostituzioni.find(s => !s.del && s.assenzaId === a.id && s.data === r.data && s.ora === r.ora); if (!ex) return;
+    if (ex.nosub) { if (keepNosub) { r.nosub = true; r.auto = false; r.sostituto = null; r.tier = null; r.kind = null; r.anticipo = false; r.diviso = false; } }
+    else if (ex.diviso) { r.diviso = true; r.sostituto = null; r.tier = null; r.kind = null; r.anticipo = false; }
+    else if (ex.sostituto) { r.sostituto = ex.sostituto; r.tier = ex.tier; r.anticipo = !!ex.anticipo; r.kind = ex.kind || null; r.diviso = false; }
+  });
+  return rows;
+}
+function saveEdit(dd, later) {
+  const id = dd.assenza.id, oldMan = {};
+  state.permessi.filter(p => p.assenzaId === id && !p.del).forEach(p => { oldMan[p.data] = p.fatteMan || 0; const ex = state.recuperi.find(r => r.id === p.docente && !r.del); if (ex) { ex.ore = Math.max(0, ex.ore - (p.ore - (p.fatteMan || 0))); touch(ex); } p.del = true; touch(p); });
+  state.eventi.filter(e => e.ref === id && !e.del).forEach(e => { e.del = true; touch(e); });
+  const a = put("assenze", { ...dd.assenza });
+  const keep = new Set(dd.rows.map(r => r.data + "|" + r.ora));
+  state.sostituzioni.filter(s => !s.del && s.assenzaId === id && !keep.has(s.data + "|" + s.ora)).forEach(s => { s.del = true; touch(s); });
+  for (const r of dd.rows) {
+    const ex = state.sostituzioni.find(s => !s.del && s.assenzaId === id && s.data === r.data && s.ora === r.ora);
+    const pend = !!later && r.auto !== false && !r.sostituto && !r.diviso && !r.nosub;
+    const vals = { classe: r.classe, classi: r.classi, materia: r.materia, tipo: r.tipo, assente: r.assente, auto: r.auto, sostituto: r.sostituto || null, tier: r.sostituto ? r.tier : null, anticipo: !!r.anticipo, kind: r.kind || null, diviso: !!r.diviso, nosub: !!r.nosub, pending: pend };
+    if (ex) { const cambiato = (ex.sostituto || null) !== (vals.sostituto || null) || !!ex.diviso !== vals.diviso; Object.assign(ex, vals); if (cambiato) ex.firmata = false; touch(ex); }
+    else put("sostituzioni", { assenzaId: id, data: r.data, ora: r.ora, firmata: false, ...vals });
+  }
+  for (const p of dd.permessi || []) if (p.rec > 0) { const fm = Math.min(oldMan[p.data] || 0, p.rec); put("permessi", { docente: a.docente, data: p.data, ore: p.rec, fatteMan: fm, assenzaId: id }); const ex = state.recuperi.find(r => r.id === a.docente && !r.del); recPut(a.docente, (ex ? ex.ore : 0) + p.rec - fm); }
+  if (dd.promemoria) { const n = dd.rows.filter(r => r.sostituto).length; put("eventi", { titolo: `Assenza ${nice(a.docente)}`, data: a.dal, ora: "07:30", durata: 30, nota: (() => { const cop = dd.rows.filter(r => !r.nosub).length; return !cop ? "Docente di sostegno: nessuna sostituzione prevista" : later ? `${cop} ${cop === 1 ? "ora" : "ore"} da coprire (sostituzioni da definire)` : `${cop} ${cop === 1 ? "ora" : "ore"} da coprire (${n} con sostituto)`; })(), ripeti: "", auto: true, ref: a.id }); }
+  ui.draft = null; ui.form = null; ui.sostAsk = null; ui.date = firstSchoolDay(a.dal); ui.tab = "oggi"; commit(); window.scrollTo(0, 0); toast("Assenza modificata");
+}
 function saveDraft(later) {
   const dd = ui.draft; if (!dd) return;
+  if (dd.editOf) return saveEdit(dd, later);
   if (dd.existing) {
     for (const r of dd.rows) {
       const ex = state.sostituzioni.find(s => !s.del && s.assenzaId === dd.assenza.id && s.data === r.data && s.ora === r.ora);
@@ -1267,6 +1298,8 @@ document.addEventListener("click", e => {
   else if (a === "savelater") saveDraft(true);
   else if (a === "delabs") delAbs(id);
   else if (a === "editsub") editSub(id);
+  else if (a === "editabs") { const as = state.assenze.find(x => x.id === id && !x.del); if (!as) return; ui.form = { editId: id, docente: as.docente, dal: as.dal, al: as.al || "", tutto: as.ore === "tutto", ore: as.ore === "tutto" ? [] : [...as.ore], motivo: as.motivo || "Malattia", nota: as.nota || "", promemoria: state.eventi.some(e => !e.del && e.ref === id) }; ui.draft = null; ui.sostAsk = null; ui.tab = "assenze"; render(); window.scrollTo(0, 0); }
+  else if (a === "editcancel") { ui.form = null; ui.draft = null; ui.sostAsk = null; render(); }
   else if (a === "essave") { const s = state.sostituzioni.find(x => x.id === id); const v = $("#es_val").value; if (v === "DIV") { s.sostituto = null; s.tier = null; s.anticipo = false; s.kind = null; s.diviso = true; s.nosub = false; s.auto = true; } else if (!v) { s.sostituto = null; s.tier = null; s.anticipo = false; s.kind = null; s.diviso = false; } else { s.diviso = false; const [n, tr, an, kd] = v.split("|"); s.sostituto = n; s.tier = +tr; s.anticipo = an === "1"; s.kind = kd || null; s.nosub = false; s.auto = true; } s.pending = false; touch(s); $("#dlg").close(); commit(); }
   else if (a === "dlgclose") $("#dlg").close();
     else if (a === "xlsx") exportXlsx();
