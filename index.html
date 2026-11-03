@@ -633,7 +633,7 @@ function optList(need, currentSubs, selected, act, idx, diviso, nosubLabel, nosu
 }
 
 /* ============ rendering ============ */
-const BUILD = "04/11/2026 · 21";
+const BUILD = "04/11/2026 · 22";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -980,14 +980,15 @@ function oreChips(dr) {
 }
 function normMotivo(dr) { const ok = dr.tutto ? MOTIVI.filter(m => m !== "Permesso breve") : MOTIVI_PARZ; if (!ok.includes(dr.motivo)) dr.motivo = ok[0]; return ok; }
 function classiAccompagnabili(dr) {
-  if (!state.orario || !dr.docente || !dr.dal) return [];
-  return [...new Set(E.coverNeeds(state, { docente: dr.docente, dal: dr.dal, al: dr.al && dr.al >= dr.dal ? dr.al : dr.dal, ore: dr.tutto ? "tutto" : dr.ore }).flatMap(n => n.classi))].sort();
+  if (!state.orario || !dr.docente) return [];
+  const d = state.orario.docenti[dr.docente]; if (!d) return [];
+  return [...new Set(Object.values(d.orario).flatMap(c => E.classesOf(c) || []))].sort(); // tutte le classi del docente, non solo quelle del giorno
 }
 function accBox(dr) {
   if (dr.motivo !== "Uscita didattica") return "";
   const L = classiAccompagnabili(dr); if (!L.length) return "";
   const sel = (dr.accomp || []).filter(c => L.includes(c));
-  return `<label class="f">Classe accompagnata</label><div class="chips">${L.map(c => `<span class="chip sm ${sel.includes(c) ? "on" : ""}" data-act="accchip" data-c="${esc(c)}">${esc(c)}</span>`).join("")}</div><p class="mut" style="margin:4px 0 0">Per la classe accompagnata non è prevista nessuna sostituzione. Le altre classi del docente si sostituiscono. Senza nessuna scelta si sostituiscono tutte.</p>`;
+  return `<label class="f">Classe accompagnata</label><div class="chips">${L.map(c => `<span class="chip sm ${sel.includes(c) ? "on" : ""}" data-act="accchip" data-c="${esc(c)}">${esc(c)}</span>`).join("")}</div><p class="mut" style="margin:4px 0 0">Tutte le classi del docente: scegliere quella che accompagna, anche se quel giorno non ha lezione con lei. Per la classe accompagnata non è prevista nessuna sostituzione; le altre classi del docente si sostituiscono. Senza nessuna scelta si sostituiscono tutte.</p>`;
 }
 function motBox(dr) { const ok = normMotivo(dr); return `<label class="f">Motivo</label><select id="f_mot" data-act="formchg">${ok.map(m => `<option ${dr.motivo === m ? "selected" : ""}>${m}</option>`).join("")}</select>${dr.tutto ? "" : '<p class="mut" style="margin:4px 0 0">Per poche ore: «Permesso breve» (con limite di ore e recupero); «Attività fuori classe» e «Uscita didattica» (docente non assente ma impegnato altrove: si sostituisce, senza recupero); «Altro» (da specificare nella nota, senza recupero).</p>'}${accBox(dr)}`; }
 function chiusiBox(dr) {
