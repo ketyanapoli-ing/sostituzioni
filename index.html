@@ -633,7 +633,7 @@ function optList(need, currentSubs, selected, act, idx, diviso, nosubLabel, nosu
 }
 
 /* ============ rendering ============ */
-const BUILD = "07/11/2026 · 23";
+const BUILD = "07/11/2026 · 24";
 const THEMEKEY = "sost_theme";
 function themePref() { try { return localStorage.getItem(THEMEKEY) || ""; } catch (e) { return ""; } }
 function applyTheme() { const t = themePref(); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; const dark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches); const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? "#0A2158" : "#0E3C8C"; }
@@ -1263,7 +1263,7 @@ function calc(later) {
   const accOk = f.motivo === "Uscita didattica" ? (f.accomp || []).filter(c => classiAccompagnabili(f).includes(c)) : [];
   const a = { id: f.editId || uid(), docente: f.docente, accompagna: accOk, dal: f.dal, al: f.al && f.al !== f.dal ? f.al : "", ore: f.tutto ? "tutto" : [...f.ore].sort(), motivo: f.motivo, nota: f.nota };
   const nSost = E.coverNeeds(state, { ...a, al: a.al || a.dal }).filter(n => n.tipo === "sostegno").length;
-  if (!later && nSost) { ui.draft = null; ui.sostAsk = { a, pc, promemoria: f.promemoria, nSost, editOf: f.editId || null }; render(); setTimeout(() => $("#sostcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
+  if (nSost) { ui.draft = null; ui.sostAsk = { a, pc, promemoria: f.promemoria, nSost, editOf: f.editId || null, later: !!later }; render(); setTimeout(() => $("#sostcard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); return; }
   if (later) {
     const rows = E.coverNeeds(state, { ...a, al: a.al || a.dal }).sort((x, y) => x.date.localeCompare(y.date) || x.ora - y.ora).map(n => ({ data: n.date, ora: n.ora, classe: n.classe, classi: n.classi, materia: n.materia, tipo: n.tipo, assente: a.docente, sostituto: null, tier: null, anticipo: false, auto: n.auto && !(accOk.length && n.classi.some(c => accOk.includes(c))), nosub: accOk.length > 0 && n.classi.some(c => accOk.includes(c)), acc: accOk.length > 0 && n.classi.some(c => accOk.includes(c)) }));
     ui.draft = { assenza: a, rows: mergeEdit(rows, a), promemoria: f.promemoria, permessi: pc, editOf: f.editId || null }; return saveDraft(true);
@@ -1275,11 +1275,18 @@ function vSostAsk() {
   const q = ui.sostAsk, nT = E.coverNeeds(state, { ...q.a, al: q.a.al || q.a.dal }).length, altre = nT - q.nSost;
   return `<div class="card" id="sostcard"><h2>Docente di sostegno</h2><p>${esc(nice(q.a.docente))} ha ${q.nSost} ${q.nSost === 1 ? "ora" : "ore"} di sostegno${altre ? ` e ${altre} ${altre === 1 ? "ora" : "ore"} di lezione` : ""}. Sostituirle?</p>
   <div class="opts"><button type="button" class="opt g1" data-act="sostno"><span class="mk"></span><span><b>Non sostituire il sostegno</b><small>L'assenza viene solo registrata: nessuna ora scoperta e nessun avviso${altre ? ". Le ore di lezione vengono proposte comunque" : ""}</small></span></button>
-  <button type="button" class="opt g3" data-act="sostsi"><span class="mk"></span><span><b>Proporre le sostituzioni</b><small>I sostituti si scelgono ora, ora per ora</small></span></button></div>
+  <button type="button" class="opt g3" data-act="sostsi"><span class="mk"></span><span><b>${q.later ? "Sostituire il sostegno più tardi" : "Proporre le sostituzioni"}</b><small>${q.later ? "Le ore restano «da definire» e compaiono tra gli avvisi in Oggi" : "I sostituti si scelgono ora, ora per ora"}</small></span></button></div>
   <div class="row" style="margin-top:10px"><button class="b" data-act="sostcancel">Annullare</button></div></div>`;
 }
 function sostBuild(senza) {
   const q = ui.sostAsk, ass = { ...q.a, al: q.a.al || q.a.dal };
+  const nsRow = n => ({ data: n.date, ora: n.ora, classe: n.classe, classi: n.classi, materia: n.materia, tipo: n.tipo, assente: q.a.docente, sostituto: null, tier: null, anticipo: false, auto: false, nosub: true });
+  if (q.later) {
+    const accOk = q.a.accompagna || [];
+    const lr = E.coverNeeds(state, ass).sort((x, y) => x.date.localeCompare(y.date) || x.ora - y.ora).map(n => (senza && n.tipo === "sostegno") ? nsRow(n) : ({ data: n.date, ora: n.ora, classe: n.classe, classi: n.classi, materia: n.materia, tipo: n.tipo, assente: q.a.docente, sostituto: null, tier: null, anticipo: false, auto: n.auto && !(accOk.length && n.classi.some(c => accOk.includes(c))), nosub: accOk.length > 0 && n.classi.some(c => accOk.includes(c)), acc: accOk.length > 0 && n.classi.some(c => accOk.includes(c)) }));
+    ui.draft = { assenza: q.a, rows: mergeEdit(lr, q.a, !!senza), promemoria: q.promemoria, permessi: q.pc, editOf: q.editOf || null }; ui.sostAsk = null;
+    return saveDraft(true);
+  }
   let rows = E.propose(state, ass, senza ? { senzaSostegno: true } : undefined);
   if (senza) rows = rows.concat(E.coverNeeds(state, ass).filter(n => n.tipo === "sostegno").map(n => ({ data: n.date, ora: n.ora, classe: n.classe, classi: n.classi, materia: n.materia, tipo: n.tipo, assente: q.a.docente, sostituto: null, tier: null, anticipo: false, auto: false, nosub: true }))).sort((x, y) => x.data.localeCompare(y.data) || x.ora - y.ora);
   rows = mergeEdit(rows, q.a, !!senza); ui.draft = { assenza: q.a, rows, promemoria: q.promemoria, permessi: q.pc, editOf: q.editOf || null }; ui.sostAsk = null;
